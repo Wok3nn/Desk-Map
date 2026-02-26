@@ -1,0 +1,71 @@
+﻿generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model MapConfig {
+  id            String   @id @default(cuid())
+  name          String
+  width         Int
+  height        Int
+  backgroundUrl String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  desks         Desk[]
+}
+
+model Desk {
+  id               String   @id @default(cuid())
+  number           Int      @unique
+  x                Float
+  y                Float
+  width            Float
+  height           Float
+  label            String?
+  occupantFirstName String?
+  occupantLastName  String?
+  mapId            String
+  map              MapConfig @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  updatedAt        DateTime  @updatedAt
+}
+
+model EntraConfig {
+  id                  String   @id @default(cuid())
+  tenantId            String?
+  clientId            String?
+  clientSecretEnc     String?
+  scopes              String?
+  syncIntervalMinutes Int      @default(15)
+  mappingPrefix       String?  @default("Desk-")
+  mappingRegex        String?
+  adminGroupId        String?
+  authMode            String   @default("public")
+  lastTestAt          DateTime?
+  lastSyncAt          DateTime?
+  lastSyncStatus      String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model UserCache {
+  id              String   @id
+  givenName       String?
+  surname         String?
+  displayName     String?
+  officeLocation  String?
+  userPrincipalName String?
+  lastSync        DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String?
+  action    String
+  entity    String
+  details   String?
+  createdAt DateTime @default(now())
+}

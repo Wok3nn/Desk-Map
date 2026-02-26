@@ -1,0 +1,75 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+}
+
+:root {
+  --background: 220 30% 98%;
+  --foreground: 220 25% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 20% 12%;
+  --primary: 222 76% 54%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 20% 95%;
+  --secondary-foreground: 220 20% 20%;
+  --muted: 220 15% 92%;
+  --muted-foreground: 220 10% 45%;
+  --accent: 200 90% 60%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 74% 56%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 16% 86%;
+  --input: 220 16% 86%;
+  --ring: 222 76% 54%;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: 225 20% 10%;
+  --foreground: 0 0% 98%;
+  --card: 225 22% 14%;
+  --card-foreground: 0 0% 98%;
+  --primary: 215 93% 62%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 18% 20%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 220 16% 18%;
+  --muted-foreground: 220 10% 70%;
+  --accent: 192 90% 55%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 70% 52%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 16% 24%;
+  --input: 220 16% 24%;
+  --ring: 215 93% 62%;
+}
+
+.grid-surface {
+  background-image: radial-gradient(circle at 1px 1px, rgba(120, 120, 140, 0.2) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.grid-surface.dark {
+  background-image: radial-gradient(circle at 1px 1px, rgba(150, 150, 180, 0.12) 1px, transparent 0);
+}
+
+.shimmer {
+  background: linear-gradient(110deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.3) 45%, rgba(255, 255, 255, 0.1) 65%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+.dark .shimmer {
+  background: linear-gradient(110deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.12) 45%, rgba(255, 255, 255, 0.05) 65%);
+}

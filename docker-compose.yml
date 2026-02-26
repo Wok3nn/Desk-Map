@@ -1,0 +1,13 @@
+services:
+  deskmap:
+    build: .
+    ports:
+      - "3050:3000"
+    env_file:
+      - ./.env
+    environment:
+      - DATABASE_URL=file:./data/dev.db
+      - NEXT_PUBLIC_APP_NAME=DeskMap
+    volumes:
+      - ./data:/app/data
+    command: sh -c "./node_modules/.bin/prisma db push && npm run dev -- --hostname 0.0.0.0"
