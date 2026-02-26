@@ -29,10 +29,10 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code === "Space") setIsPanning(true);
+      if (event.code === "ControlLeft" || event.code === "ControlRight") setIsPanning(true);
     };
     const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.code === "Space") setIsPanning(false);
+      if (event.code === "ControlLeft" || event.code === "ControlRight") setIsPanning(false);
     };
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
@@ -272,7 +272,7 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
         )}
       </Stage>
       <div className="absolute bottom-4 right-4 rounded-full bg-background/90 px-4 py-2 text-xs text-muted-foreground shadow-soft">
-        Zoom: {(scale * 100).toFixed(0)}% ? {stageDraggable ? "Pan" : "Select"}
+        Zoom: {(scale * 100).toFixed(0)}% · {stageDraggable ? "Pan" : "Select"}
       </div>
     </motion.div>
   );

@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
+import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { toast } from "sonner";
 import { useDeskData } from "@/components/map/useDeskData";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import type { Desk } from "@/lib/types";
 
 const createDesk = (number: number): Desk => ({
@@ -32,6 +34,7 @@ export default function AdminPage() {
   const { data, loading, error, saveDesks, setData } = useDeskData();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [snapEnabled, setSnapEnabled] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(true);
   const [entraLoading, setEntraLoading] = useState(true);
   const [entraConfig, setEntraConfig] = useState({
     tenantId: "",
@@ -74,7 +77,7 @@ export default function AdminPage() {
             lastSyncStatus: payload.config.lastSyncStatus ?? undefined
           });
         }
-      } catch (err) {
+      } catch {
         toast.error("Unable to load Entra settings");
       } finally {
         setEntraLoading(false);
@@ -103,7 +106,7 @@ export default function AdminPage() {
     try {
       await saveDesks(desks);
       toast.success("Layout saved and synced");
-    } catch (err) {
+    } catch {
       toast.error("Failed to save layout");
     }
   };
@@ -131,7 +134,7 @@ export default function AdminPage() {
       });
       setEntraConfig((prev) => ({ ...prev, clientSecret: "" }));
       toast.success("Entra settings saved");
-    } catch (err) {
+    } catch {
       toast.error("Failed to save Entra settings");
     }
   };
@@ -196,177 +199,191 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="grid gap-6">
-      <Card>
-        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle>Admin Studio</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Drag to move, use handles to resize, hold Space or right-drag to pan.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-2 text-xs text-muted-foreground">
-              <span>Snap to grid</span>
-              <Switch checked={snapEnabled} onCheckedChange={setSnapEnabled} />
+    <div className="relative">
+      <div className={cn("grid gap-6 transition-[padding] duration-300", settingsOpen && "xl:pr-[430px]")}>
+        <Card>
+          <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <CardTitle>Admin Studio</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Drag to move, use handles to resize, hold Ctrl or right-drag to pan.
+              </p>
             </div>
-            <Button variant="secondary" onClick={handleAddDesk}>
-              Add Desk {nextDeskNumber}
-            </Button>
-            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-              Import Building Map
-            </Button>
-            <Button variant="outline" onClick={handleRemoveLast}>
-              Remove Last
-            </Button>
-            <Button onClick={handleSave}>Save Layout</Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".svg,.png,.jpg,.jpeg,image/svg+xml,image/png,image/jpeg"
-              className="hidden"
-              onChange={handleMapUpload}
-              aria-label="Import building map"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          {error ? (
-            <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-6 text-sm text-destructive">
-              {error}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-2 text-xs text-muted-foreground">
+                <span>Snap to grid</span>
+                <Switch checked={snapEnabled} onCheckedChange={setSnapEnabled} />
+              </div>
+              <Button variant="secondary" onClick={handleAddDesk}>
+                Add Desk {nextDeskNumber}
+              </Button>
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                Import Building Map
+              </Button>
+              <Button variant="outline" onClick={handleRemoveLast}>
+                Remove Last
+              </Button>
+              <Button onClick={handleSave}>Save Layout</Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".svg,.png,.jpg,.jpeg,image/svg+xml,image/png,image/jpeg"
+                className="hidden"
+                onChange={handleMapUpload}
+                aria-label="Import building map"
+              />
             </div>
-          ) : (
-            <DeskMap
-              mode="edit"
-              map={data.map}
-              desks={desks}
-              onChange={(next) => setData({ ...data, desks: next })}
-              snapEnabled={snapEnabled}
-            />
-          )}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle>Microsoft Entra Sync</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Configure Graph access and seat mapping rules. Secrets are encrypted at rest.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" onClick={handleTestEntra} disabled={entraLoading}>
-              Test Connection
-            </Button>
-            <Button variant="secondary" onClick={handleSyncEntra} disabled={entraLoading}>
-              Sync Now
-            </Button>
-            <Button onClick={handleSaveEntra} disabled={entraLoading}>
-              Save Settings
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="tenantId">Tenant ID</Label>
-                <Input
-                  id="tenantId"
-                  value={entraConfig.tenantId}
-                  onChange={(event) => setEntraConfig({ ...entraConfig, tenantId: event.target.value })}
-                  placeholder="00000000-0000-0000-0000-000000000000"
-                />
+          </CardHeader>
+          <CardContent>
+            {error ? (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-6 text-sm text-destructive">
+                {error}
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="clientId">Client ID</Label>
-                <Input
-                  id="clientId"
-                  value={entraConfig.clientId}
-                  onChange={(event) => setEntraConfig({ ...entraConfig, clientId: event.target.value })}
-                  placeholder="00000000-0000-0000-0000-000000000000"
-                />
+            ) : (
+              <DeskMap
+                mode="edit"
+                map={data.map}
+                desks={desks}
+                onChange={(next) => setData({ ...data, desks: next })}
+                snapEnabled={snapEnabled}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setSettingsOpen((prev) => !prev)}
+        className="fixed right-3 top-1/2 z-40 flex -translate-y-1/2 items-center gap-2 rounded-l-xl border border-border/60 bg-card px-3 py-2 text-xs font-medium text-foreground shadow-soft"
+        aria-label={settingsOpen ? "Hide connection settings" : "Show connection settings"}
+      >
+        {settingsOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
+        Connection
+      </button>
+
+      <aside
+        className={cn(
+          "fixed right-0 top-[72px] z-30 h-[calc(100vh-72px)] w-full max-w-[420px] border-l border-border/60 bg-background/95 backdrop-blur-xl transition-transform duration-300",
+          settingsOpen ? "translate-x-0" : "translate-x-full"
+        )}
+      >
+        <div className="h-full overflow-y-auto p-4">
+          <Card className="h-full">
+            <CardHeader className="gap-3">
+              <CardTitle>Microsoft Entra Sync</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Configure Graph access and seat mapping rules. Secrets are encrypted at rest.
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" onClick={handleTestEntra} disabled={entraLoading}>
+                  Test Connection
+                </Button>
+                <Button variant="secondary" onClick={handleSyncEntra} disabled={entraLoading}>
+                  Sync Now
+                </Button>
+                <Button onClick={handleSaveEntra} disabled={entraLoading}>
+                  Save Settings
+                </Button>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="clientSecret">Client Secret</Label>
-                <Input
-                  id="clientSecret"
-                  type="password"
-                  value={entraConfig.clientSecret}
-                  onChange={(event) => setEntraConfig({ ...entraConfig, clientSecret: event.target.value })}
-                  placeholder="Store securely"
-                />
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="tenantId">Tenant ID</Label>
+                  <Input
+                    id="tenantId"
+                    value={entraConfig.tenantId}
+                    onChange={(event) => setEntraConfig({ ...entraConfig, tenantId: event.target.value })}
+                    placeholder="00000000-0000-0000-0000-000000000000"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="clientId">Client ID</Label>
+                  <Input
+                    id="clientId"
+                    value={entraConfig.clientId}
+                    onChange={(event) => setEntraConfig({ ...entraConfig, clientId: event.target.value })}
+                    placeholder="00000000-0000-0000-0000-000000000000"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="clientSecret">Client Secret</Label>
+                  <Input
+                    id="clientSecret"
+                    type="password"
+                    value={entraConfig.clientSecret}
+                    onChange={(event) => setEntraConfig({ ...entraConfig, clientSecret: event.target.value })}
+                    placeholder="Store securely"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="scopes">Scopes</Label>
+                  <Textarea
+                    id="scopes"
+                    value={entraConfig.scopes}
+                    onChange={(event) => setEntraConfig({ ...entraConfig, scopes: event.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="mappingPrefix">Office Location Prefix</Label>
+                  <Input
+                    id="mappingPrefix"
+                    value={entraConfig.mappingPrefix}
+                    onChange={(event) => setEntraConfig({ ...entraConfig, mappingPrefix: event.target.value })}
+                    placeholder="Desk-"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="mappingRegex">Mapping Regex (optional)</Label>
+                  <Input
+                    id="mappingRegex"
+                    value={entraConfig.mappingRegex}
+                    onChange={(event) => setEntraConfig({ ...entraConfig, mappingRegex: event.target.value })}
+                    placeholder="Desk-(\\d+)"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="syncInterval">Sync Interval (minutes)</Label>
+                  <Input
+                    id="syncInterval"
+                    type="number"
+                    min={5}
+                    value={entraConfig.syncIntervalMinutes}
+                    onChange={(event) =>
+                      setEntraConfig({ ...entraConfig, syncIntervalMinutes: Number(event.target.value) })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="adminGroupId">Admin Group Object ID</Label>
+                  <Input
+                    id="adminGroupId"
+                    value={entraConfig.adminGroupId}
+                    onChange={(event) => setEntraConfig({ ...entraConfig, adminGroupId: event.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="authMode">Viewer Access</Label>
+                  <Select
+                    id="authMode"
+                    value={entraConfig.authMode}
+                    onChange={(event) => setEntraConfig({ ...entraConfig, authMode: event.target.value })}
+                  >
+                    <option value="public">Public (no login)</option>
+                    <option value="entra">Entra login required</option>
+                  </Select>
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="scopes">Scopes</Label>
-                <Textarea
-                  id="scopes"
-                  value={entraConfig.scopes}
-                  onChange={(event) => setEntraConfig({ ...entraConfig, scopes: event.target.value })}
-                />
+              <div className="mt-6 grid gap-2 text-xs text-muted-foreground">
+                <span>Last test: {entraMeta.lastTestAt ? new Date(entraMeta.lastTestAt).toLocaleString() : "Never"}</span>
+                <span>Last sync: {entraMeta.lastSyncAt ? new Date(entraMeta.lastSyncAt).toLocaleString() : "Never"}</span>
+                <span>Status: {entraMeta.lastSyncStatus ?? "-"}</span>
               </div>
-            </div>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="mappingPrefix">Office Location Prefix</Label>
-                <Input
-                  id="mappingPrefix"
-                  value={entraConfig.mappingPrefix}
-                  onChange={(event) => setEntraConfig({ ...entraConfig, mappingPrefix: event.target.value })}
-                  placeholder="Desk-"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="mappingRegex">Mapping Regex (optional)</Label>
-                <Input
-                  id="mappingRegex"
-                  value={entraConfig.mappingRegex}
-                  onChange={(event) => setEntraConfig({ ...entraConfig, mappingRegex: event.target.value })}
-                  placeholder="Desk-(\\d+)"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="syncInterval">Sync Interval (minutes)</Label>
-                <Input
-                  id="syncInterval"
-                  type="number"
-                  min={5}
-                  value={entraConfig.syncIntervalMinutes}
-                  onChange={(event) =>
-                    setEntraConfig({ ...entraConfig, syncIntervalMinutes: Number(event.target.value) })
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="adminGroupId">Admin Group Object ID</Label>
-                <Input
-                  id="adminGroupId"
-                  value={entraConfig.adminGroupId}
-                  onChange={(event) => setEntraConfig({ ...entraConfig, adminGroupId: event.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="authMode">Viewer Access</Label>
-                <Select
-                  id="authMode"
-                  value={entraConfig.authMode}
-                  onChange={(event) => setEntraConfig({ ...entraConfig, authMode: event.target.value })}
-                >
-                  <option value="public">Public (no login)</option>
-                  <option value="entra">Entra login required</option>
-                </Select>
-              </div>
-            </div>
-          </div>
-          <div className="mt-6 grid gap-2 text-xs text-muted-foreground">
-            <span>Last test: {entraMeta.lastTestAt ? new Date(entraMeta.lastTestAt).toLocaleString() : "Never"}</span>
-            <span>Last sync: {entraMeta.lastSyncAt ? new Date(entraMeta.lastSyncAt).toLocaleString() : "Never"}</span>
-            <span>Status: {entraMeta.lastSyncStatus ?? "?"}</span>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </aside>
     </div>
   );
 }
-
-
