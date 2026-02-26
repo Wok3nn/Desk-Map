@@ -17,7 +17,7 @@ export default function ViewerPage() {
             <CardTitle>Live Floor Map</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[620px] w-full rounded-2xl border border-border/60 bg-muted/40 shimmer" />
+            <div className="h-[calc(100vh-220px)] min-h-[660px] w-full rounded-2xl border border-border/60 bg-muted/40 shimmer" />
           </CardContent>
         </Card>
       </div>

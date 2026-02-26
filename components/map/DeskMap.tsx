@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Stage, Layer, Rect, Text, Group, Transformer } from "react-konva";
+import { Stage, Layer, Rect, Text, Group, Transformer, Image as KonvaImage } from "react-konva";
 import { motion } from "framer-motion";
 import { Desk, MapConfig } from "@/lib/types";
 
@@ -22,8 +22,10 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
   const trRef = useRef<any>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isPanning, setIsPanning] = useState(false);
+  const [isRightMousePanning, setIsRightMousePanning] = useState(false);
   const [scale, setScale] = useState(1);
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 });
+  const [backgroundImage, setBackgroundImage] = useState<HTMLImageElement | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -39,6 +41,26 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
       window.removeEventListener("keyup", handleKeyUp);
     };
   }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const handler = (event: MouseEvent) => event.preventDefault();
+    el.addEventListener("contextmenu", handler);
+    return () => el.removeEventListener("contextmenu", handler);
+  }, []);
+
+  useEffect(() => {
+    if (!map.backgroundUrl) {
+      setBackgroundImage(null);
+      return;
+    }
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => setBackgroundImage(img);
+    img.onerror = () => setBackgroundImage(null);
+    img.src = map.backgroundUrl;
+  }, [map.backgroundUrl]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -107,7 +129,7 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
     return Math.round(value / gridSize) * gridSize;
   };
 
-  const stageDraggable = mode === "view" || isPanning;
+  const stageDraggable = mode === "view" || isPanning || isRightMousePanning;
 
   const gridLines = useMemo(() => {
     const lines = [] as JSX.Element[];
@@ -131,7 +153,7 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="relative h-[620px] w-full overflow-hidden rounded-2xl border border-border/60 bg-card shadow-soft"
+      className="relative h-[calc(100vh-220px)] min-h-[660px] w-full overflow-hidden rounded-2xl border border-border/60 bg-card shadow-soft"
     >
       <Stage
         ref={stageRef}
@@ -140,15 +162,31 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
         draggable={stageDraggable}
         onWheel={handleWheel}
         onMouseDown={(event) => {
+          if (mode === "edit" && event.evt.button === 2) {
+            setIsRightMousePanning(true);
+            return;
+          }
           if (mode === "edit" && !isPanning) {
             const clickedOnEmpty = event.target === event.target.getStage();
             if (clickedOnEmpty) setSelectedId(null);
           }
         }}
+        onMouseUp={() => setIsRightMousePanning(false)}
+        onMouseLeave={() => setIsRightMousePanning(false)}
         className="grid-surface"
         style={{ background: "transparent" }}
       >
         <Layer>
+          {backgroundImage && (
+            <KonvaImage
+              image={backgroundImage}
+              x={0}
+              y={0}
+              width={map.width}
+              height={map.height}
+              listening={false}
+            />
+          )}
           {gridLines}
         </Layer>
         <Layer>
@@ -165,7 +203,7 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
                 opacity={mode === "edit" && selectedId === desk.id ? 0.95 : 0.9}
                 shadowBlur={20}
                 shadowColor="rgba(0,0,0,0.2)"
-                draggable={mode === "edit" && !isPanning}
+                draggable={mode === "edit" && !isPanning && !isRightMousePanning}
                 onClick={() => mode === "edit" && setSelectedId(desk.id)}
                 onTap={() => mode === "edit" && setSelectedId(desk.id)}
                 onDragEnd={(event) => {
@@ -234,7 +272,7 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
         )}
       </Stage>
       <div className="absolute bottom-4 right-4 rounded-full bg-background/90 px-4 py-2 text-xs text-muted-foreground shadow-soft">
-        Zoom: {(scale * 100).toFixed(0)}% · {stageDraggable ? "Pan" : "Select"}
+        Zoom: {(scale * 100).toFixed(0)}% ? {stageDraggable ? "Pan" : "Select"}
       </div>
     </motion.div>
   );

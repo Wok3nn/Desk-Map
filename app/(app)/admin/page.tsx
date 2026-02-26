@@ -1,7 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import { toast } from "sonner";
 import { useDeskData } from "@/components/map/useDeskData";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const DeskMap = dynamic(() => import("@/components/map/DeskMap").then((m) => m.D
 
 export default function AdminPage() {
   const { data, loading, error, saveDesks, setData } = useDeskData();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [entraLoading, setEntraLoading] = useState(true);
   const [entraConfig, setEntraConfig] = useState({
@@ -156,6 +158,28 @@ export default function AdminPage() {
     }
   };
 
+  const handleMapUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !data) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/map/upload", {
+        method: "POST",
+        body: formData
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || "Upload failed");
+      setData({ ...data, map: payload.map });
+      toast.success("Building map imported");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Import failed");
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   if (loading || !data) {
     return (
       <div className="grid gap-6">
@@ -164,7 +188,7 @@ export default function AdminPage() {
             <CardTitle>Admin Studio</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[620px] w-full rounded-2xl border border-border/60 bg-muted/40 shimmer" />
+            <div className="h-[calc(100vh-220px)] min-h-[660px] w-full rounded-2xl border border-border/60 bg-muted/40 shimmer" />
           </CardContent>
         </Card>
       </div>
@@ -178,7 +202,7 @@ export default function AdminPage() {
           <div>
             <CardTitle>Admin Studio</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Drag to move, use handles to resize, hold Space to pan.
+              Drag to move, use handles to resize, hold Space or right-drag to pan.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -189,10 +213,21 @@ export default function AdminPage() {
             <Button variant="secondary" onClick={handleAddDesk}>
               Add Desk {nextDeskNumber}
             </Button>
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+              Import Building Map
+            </Button>
             <Button variant="outline" onClick={handleRemoveLast}>
               Remove Last
             </Button>
             <Button onClick={handleSave}>Save Layout</Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".svg,.png,.jpg,.jpeg,image/svg+xml,image/png,image/jpeg"
+              className="hidden"
+              onChange={handleMapUpload}
+              aria-label="Import building map"
+            />
           </div>
         </CardHeader>
         <CardContent>
