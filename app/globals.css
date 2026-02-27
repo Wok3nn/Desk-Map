@@ -19,19 +19,19 @@ body {
   --foreground: 220 25% 12%;
   --card: 0 0% 100%;
   --card-foreground: 220 20% 12%;
-  --primary: 222 76% 54%;
+  --primary: 208 90% 60%;
   --primary-foreground: 0 0% 100%;
   --secondary: 220 20% 95%;
   --secondary-foreground: 220 20% 20%;
   --muted: 220 15% 92%;
   --muted-foreground: 220 10% 45%;
-  --accent: 200 90% 60%;
+  --accent: 208 90% 60%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 74% 56%;
   --destructive-foreground: 0 0% 100%;
   --border: 220 16% 86%;
   --input: 220 16% 86%;
-  --ring: 222 76% 54%;
+  --ring: 208 90% 60%;
 }
 
 .dark {
@@ -40,19 +40,19 @@ body {
   --foreground: 0 0% 98%;
   --card: 225 22% 14%;
   --card-foreground: 0 0% 98%;
-  --primary: 215 93% 62%;
+  --primary: 208 90% 60%;
   --primary-foreground: 0 0% 100%;
   --secondary: 220 18% 20%;
   --secondary-foreground: 0 0% 98%;
   --muted: 220 16% 18%;
   --muted-foreground: 220 10% 70%;
-  --accent: 192 90% 55%;
+  --accent: 208 90% 60%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 70% 52%;
   --destructive-foreground: 0 0% 100%;
   --border: 220 16% 24%;
   --input: 220 16% 24%;
-  --ring: 215 93% 62%;
+  --ring: 208 90% 60%;
 }
 
 .grid-surface {
