@@ -24,7 +24,7 @@ async function ensureMap() {
       deskColor: "#8764B8",
       deskShape: "rounded",
       deskIcon: "none",
-      labelPosition: "inside",
+      labelPosition: "top-center",
       showName: true,
       showNumber: true,
       deskTextSize: 14,

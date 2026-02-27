@@ -142,10 +142,10 @@ export function DeskMap({
   const labelPosition = map.labelPosition || "inside";
   const showName = map.showName ?? true;
   const showNumber = map.showNumber ?? true;
-  const baseTextSize = Math.max(8, Math.min(28, map.deskTextSize ?? 14));
-  const numberSize = Math.max(8, baseTextSize - 1);
-  const firstNameSize = Math.max(8, baseTextSize + 1);
-  const lastNameSize = Math.max(8, baseTextSize);
+  const baseTextSize = Math.max(1, Math.min(72, map.deskTextSize ?? 14));
+  const numberSize = Math.max(1, baseTextSize - 1);
+  const firstNameSize = Math.max(1, baseTextSize + 1);
+  const lastNameSize = Math.max(1, baseTextSize);
 
   const gridLines = useMemo(() => {
     const lines = [] as JSX.Element[];
@@ -179,7 +179,7 @@ export function DeskMap({
             return;
           }
           if (mode === "edit" && !isPanning) {
-            const clickedDesk = event.target?.hasName?.("desk-shape");
+            const clickedDesk = !!event.target?.findAncestor?.(".desk-group", true);
             if (!clickedDesk) setSelectedId(null);
           }
         }}
@@ -194,13 +194,13 @@ export function DeskMap({
         </Layer>
         <Layer>
           {desks.map((desk) => (
-            <Group key={desk.id}>
+            <Group key={desk.id} name="desk-group">
               {deskShape === "circle" && (
                 <Circle
                   x={desk.x + desk.width / 2}
                   y={desk.y + desk.height / 2}
                   radius={Math.max(MIN_SIZE / 2, Math.min(desk.width, desk.height) / 2)}
-                  fill={desk.occupantFirstName ? deskColor : "#0F172A"}
+                  fill={deskColor}
                   opacity={mode === "edit" && selectedId === desk.id ? 0.95 : 0.9}
                   shadowBlur={20}
                   shadowColor="rgba(0,0,0,0.2)"
@@ -211,7 +211,7 @@ export function DeskMap({
                 <Line
                   points={[desk.x + desk.width / 2, desk.y, desk.x + desk.width, desk.y + desk.height / 2, desk.x + desk.width / 2, desk.y + desk.height, desk.x, desk.y + desk.height / 2]}
                   closed
-                  fill={desk.occupantFirstName ? deskColor : "#0F172A"}
+                  fill={deskColor}
                   opacity={mode === "edit" && selectedId === desk.id ? 0.95 : 0.9}
                   shadowBlur={20}
                   shadowColor="rgba(0,0,0,0.2)"
@@ -228,9 +228,7 @@ export function DeskMap({
                 cornerRadius={deskShape === "rectangle" ? 0 : deskShape === "capsule" ? 999 : 8}
                 fill={
                   deskShape === "rectangle" || deskShape === "rounded" || deskShape === "capsule"
-                    ? desk.occupantFirstName
-                      ? deskColor
-                      : "#0F172A"
+                    ? deskColor
                     : "rgba(15,23,42,0.001)"
                 }
                 opacity={deskShape === "rectangle" || deskShape === "rounded" || deskShape === "capsule" ? (mode === "edit" && selectedId === desk.id ? 0.95 : 0.9) : 1}
@@ -255,9 +253,28 @@ export function DeskMap({
                 }}
               />
               {(() => {
-                const effectivePosition = labelPosition === "inside" && (desk.width < 80 || desk.height < 52) ? "top" : labelPosition;
-                const baseX = effectivePosition === "left" ? desk.x - 120 : effectivePosition === "right" ? desk.x + desk.width + 10 : desk.x + 10;
-                const baseY = effectivePosition === "top" ? desk.y - 48 : effectivePosition === "bottom" ? desk.y + desk.height + 8 : desk.y + 10;
+                const effectivePosition =
+                  labelPosition === "inside" && (desk.width < 80 || desk.height < 52) ? "top-center" : labelPosition;
+                const leftX = desk.x - 120;
+                const centerX = desk.x + 10;
+                const rightX = desk.x + desk.width + 10;
+                const topY = desk.y - 48;
+                const middleY = desk.y + Math.max(4, desk.height / 2 - 20);
+                const bottomY = desk.y + desk.height + 8;
+                const baseX =
+                  effectivePosition === "top-left" || effectivePosition === "middle-left" || effectivePosition === "bottom-left"
+                    ? leftX
+                    : effectivePosition === "top-right" || effectivePosition === "middle-right" || effectivePosition === "bottom-right"
+                      ? rightX
+                      : centerX;
+                const baseY =
+                  effectivePosition === "top-left" || effectivePosition === "top-center" || effectivePosition === "top-right"
+                    ? topY
+                    : effectivePosition === "middle-left" || effectivePosition === "middle-right"
+                      ? middleY
+                      : effectivePosition === "bottom-left" || effectivePosition === "bottom-center" || effectivePosition === "bottom-right"
+                        ? bottomY
+                        : desk.y + 10;
                 const textFill = effectivePosition === "inside" ? "#E2E8F0" : "#334155";
                 return (
                   <>

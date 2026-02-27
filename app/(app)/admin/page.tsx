@@ -47,7 +47,7 @@ export default function AdminPage() {
   const [mapStyle, setMapStyle] = useState<MapStyle>({
     deskColor: "#8764B8",
     deskShape: "rounded",
-    labelPosition: "inside",
+    labelPosition: "top-center",
     showName: true,
     showNumber: true,
     deskTextSize: 14,
@@ -110,7 +110,7 @@ export default function AdminPage() {
     setMapStyle({
       deskColor: data.map.deskColor ?? "#8764B8",
       deskShape: data.map.deskShape ?? "rounded",
-      labelPosition: data.map.labelPosition ?? "inside",
+      labelPosition: data.map.labelPosition ?? "top-center",
       showName: data.map.showName ?? true,
       showNumber: data.map.showNumber ?? true,
       deskTextSize: data.map.deskTextSize ?? 14,
@@ -304,10 +304,14 @@ export default function AdminPage() {
                 <Label htmlFor="labelPosition">Label Position</Label>
                 <Select id="labelPosition" value={mapStyle.labelPosition} onChange={(event) => setMapStyle({ ...mapStyle, labelPosition: event.target.value as MapStyle["labelPosition"] })}>
                   <option value="inside">Inside</option>
-                  <option value="top">Top</option>
-                  <option value="bottom">Bottom</option>
-                  <option value="left">Left</option>
-                  <option value="right">Right</option>
+                  <option value="top-left">Top Left</option>
+                  <option value="top-center">Top Center</option>
+                  <option value="top-right">Top Right</option>
+                  <option value="middle-left">Middle Left</option>
+                  <option value="middle-right">Middle Right</option>
+                  <option value="bottom-left">Bottom Left</option>
+                  <option value="bottom-center">Bottom Center</option>
+                  <option value="bottom-right">Bottom Right</option>
                 </Select>
               </div>
               <div className="grid gap-1">
@@ -315,10 +319,10 @@ export default function AdminPage() {
                 <Input
                   id="deskTextSize"
                   type="number"
-                  min={8}
-                  max={28}
+                  min={1}
+                  max={72}
                   value={mapStyle.deskTextSize}
-                  onChange={(event) => setMapStyle({ ...mapStyle, deskTextSize: Math.max(8, Math.min(28, Number(event.target.value) || 14)) })}
+                  onChange={(event) => setMapStyle({ ...mapStyle, deskTextSize: Math.max(1, Math.min(72, Number(event.target.value) || 14)) })}
                 />
               </div>
               <div className="flex items-end gap-2">

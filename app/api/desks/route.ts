@@ -12,8 +12,8 @@ const demoDesks = () => {
       number,
       x: 80 + (index % 5) * 180,
       y: 80 + Math.floor(index / 5) * 180,
-      width: 140,
-      height: 90,
+      width: 10,
+      height: 10,
       label: null,
       occupantFirstName: number % 2 === 0 ? "Alex" : "Jordan",
       occupantLastName: `Team ${number}`
@@ -35,7 +35,7 @@ async function ensureSeed() {
           deskColor: "#8764B8",
           deskShape: "rounded",
           deskIcon: "none",
-          labelPosition: "inside",
+          labelPosition: "top-center",
           showName: true,
           showNumber: true,
           deskTextSize: 14,
@@ -66,6 +66,12 @@ async function ensureSeed() {
           }
         });
       }
+    } else {
+      // Normalize old demo seed sizes from previous versions.
+      await tx.desk.updateMany({
+        where: { id: { startsWith: "demo-" }, OR: [{ width: { gt: 10 } }, { height: { gt: 10 } }] },
+        data: { width: 10, height: 10 }
+      });
     }
 
     return map;

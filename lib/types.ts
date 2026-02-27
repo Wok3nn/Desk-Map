@@ -18,7 +18,16 @@ export type MapConfig = {
   backgroundUrl?: string | null;
   deskColor?: string;
   deskShape?: "rectangle" | "rounded" | "capsule" | "circle" | "diamond";
-  labelPosition?: "inside" | "top" | "bottom" | "left" | "right";
+  labelPosition?:
+    | "inside"
+    | "top-left"
+    | "top-center"
+    | "top-right"
+    | "middle-left"
+    | "middle-right"
+    | "bottom-left"
+    | "bottom-center"
+    | "bottom-right";
   showName?: boolean;
   showNumber?: boolean;
   deskTextSize?: number;
