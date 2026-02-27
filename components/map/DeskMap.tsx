@@ -179,7 +179,7 @@ export function DeskMap({
             return;
           }
           if (mode === "edit" && !isPanning) {
-            const clickedDesk = !!event.target?.findAncestor?.(".desk-group", true);
+            const clickedDesk = !!event.target?.findAncestor?.(".desk-group");
             if (!clickedDesk) setSelectedId(null);
           }
         }}
@@ -255,34 +255,51 @@ export function DeskMap({
               {(() => {
                 const effectivePosition =
                   labelPosition === "inside" && (desk.width < 80 || desk.height < 52) ? "top-center" : labelPosition;
-                const leftX = desk.x - 120;
-                const centerX = desk.x + 10;
-                const rightX = desk.x + desk.width + 10;
+                const labelWidth = 110;
+                const leftX = desk.x - labelWidth - 8;
+                const centerX = desk.x + desk.width / 2 - labelWidth / 2;
+                const rightX = desk.x + desk.width + 8;
                 const topY = desk.y - 48;
-                const middleY = desk.y + Math.max(4, desk.height / 2 - 20);
+                const middleY = desk.y + Math.max(2, desk.height / 2 - 16);
                 const bottomY = desk.y + desk.height + 8;
+                const insideX = desk.x + 6;
+                const insideY = desk.y + 8;
                 const baseX =
-                  effectivePosition === "top-left" || effectivePosition === "middle-left" || effectivePosition === "bottom-left"
+                  effectivePosition === "inside"
+                    ? insideX
+                    : effectivePosition === "center"
+                      ? centerX
+                      : effectivePosition === "middle"
+                        ? centerX
+                        : effectivePosition === "top-left" || effectivePosition === "middle-left" || effectivePosition === "bottom-left"
                     ? leftX
                     : effectivePosition === "top-right" || effectivePosition === "middle-right" || effectivePosition === "bottom-right"
                       ? rightX
                       : centerX;
                 const baseY =
-                  effectivePosition === "top-left" || effectivePosition === "top-center" || effectivePosition === "top-right"
+                  effectivePosition === "inside"
+                    ? insideY
+                    : effectivePosition === "center"
+                      ? middleY
+                      : effectivePosition === "middle"
+                        ? middleY
+                        : effectivePosition === "top-left" || effectivePosition === "top-center" || effectivePosition === "top-right"
                     ? topY
                     : effectivePosition === "middle-left" || effectivePosition === "middle-right"
                       ? middleY
                       : effectivePosition === "bottom-left" || effectivePosition === "bottom-center" || effectivePosition === "bottom-right"
                         ? bottomY
-                        : desk.y + 10;
+                        : insideY;
                 const textFill = effectivePosition === "inside" ? "#E2E8F0" : "#334155";
                 return (
                   <>
-                    {showNumber && <Text x={baseX} y={baseY} text={`${desk.number}`} fontSize={numberSize} fontStyle="bold" fill={textFill} listening={false} />}
+                    {showNumber && <Text x={baseX} y={baseY} width={labelWidth} align="center" text={`${desk.number}`} fontSize={numberSize} fontStyle="bold" fill={textFill} listening={false} />}
                     {showName && (
                       <>
                         <Text
                           x={baseX}
+                          width={labelWidth}
+                          align="center"
                           y={baseY + (showNumber ? numberSize + 6 : 0)}
                           text={desk.occupantFirstName ?? "Available"}
                           fontSize={firstNameSize}
@@ -291,6 +308,8 @@ export function DeskMap({
                         />
                         <Text
                           x={baseX}
+                          width={labelWidth}
+                          align="center"
                           y={baseY + (showNumber ? numberSize + firstNameSize + 8 : firstNameSize + 4)}
                           text={desk.occupantLastName ?? ""}
                           fontSize={lastNameSize}

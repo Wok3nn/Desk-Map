@@ -20,6 +20,8 @@ export type MapConfig = {
   deskShape?: "rectangle" | "rounded" | "capsule" | "circle" | "diamond";
   labelPosition?:
     | "inside"
+    | "center"
+    | "middle"
     | "top-left"
     | "top-center"
     | "top-right"

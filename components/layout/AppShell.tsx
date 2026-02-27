@@ -1,11 +1,12 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { LayoutGrid, Settings, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -15,6 +16,10 @@ const navItems = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const viewerQuery = searchParams.get("q") ?? "";
+  const isViewer = pathname?.startsWith("/viewer");
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,6 +52,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </Button>
               );
             })}
+            {isViewer && (
+              <Input
+                value={viewerQuery}
+                onChange={(event) => {
+                  const params = new URLSearchParams(searchParams.toString());
+                  const value = event.target.value;
+                  if (value) params.set("q", value);
+                  else params.delete("q");
+                  const query = params.toString();
+                  router.replace(query ? `/viewer?${query}` : "/viewer");
+                }}
+                placeholder="Search name or desk #"
+                aria-label="Search desks"
+                className="w-64"
+              />
+            )}
             <ThemeToggle />
           </div>
         </div>

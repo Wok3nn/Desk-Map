@@ -38,6 +38,7 @@ type MapStyle = Pick<
 export default function AdminPage() {
   const { data, loading, error, saveDesks, setData } = useDeskData();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const configFileInputRef = useRef<HTMLInputElement | null>(null);
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [gridEnabled, setGridEnabled] = useState(true);
   const [gridSize, setGridSize] = useState(10);
@@ -229,6 +230,46 @@ export default function AdminPage() {
     }
   };
 
+  const handleExportConfig = async () => {
+    try {
+      const res = await fetch("/api/config/export", { cache: "no-store" });
+      if (!res.ok) throw new Error("Export failed");
+      const payload = await res.json();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `deskmap-config-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Config exported");
+    } catch {
+      toast.error("Failed to export config");
+    }
+  };
+
+  const handleImportConfig = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+      const res = await fetch("/api/config/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(json)
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.ok) throw new Error(payload.error || "Import failed");
+      await fetch("/api/desks");
+      window.location.reload();
+    } catch {
+      toast.error("Failed to import config");
+    } finally {
+      if (configFileInputRef.current) configFileInputRef.current.value = "";
+    }
+  };
+
   if (loading || !data) {
     return (
       <div className="grid gap-6">
@@ -269,6 +310,8 @@ export default function AdminPage() {
               </Button>
               <Button variant="outline" onClick={handleRemoveLast}>Remove Last</Button>
               <Button onClick={handleSave}>Save Layout</Button>
+              <Button variant="outline" onClick={handleExportConfig}>Export Config</Button>
+              <Button variant="outline" onClick={() => configFileInputRef.current?.click()}>Import Config</Button>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -276,6 +319,14 @@ export default function AdminPage() {
                 className="hidden"
                 onChange={handleMapUpload}
                 aria-label="Import building map"
+              />
+              <input
+                ref={configFileInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={handleImportConfig}
+                aria-label="Import deskmap configuration"
               />
             </div>
           </CardHeader>
@@ -304,6 +355,8 @@ export default function AdminPage() {
                 <Label htmlFor="labelPosition">Label Position</Label>
                 <Select id="labelPosition" value={mapStyle.labelPosition} onChange={(event) => setMapStyle({ ...mapStyle, labelPosition: event.target.value as MapStyle["labelPosition"] })}>
                   <option value="inside">Inside</option>
+                  <option value="center">Center</option>
+                  <option value="middle">Middle</option>
                   <option value="top-left">Top Left</option>
                   <option value="top-center">Top Center</option>
                   <option value="top-right">Top Right</option>

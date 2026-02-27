@@ -1,16 +1,17 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { useDeskData } from "@/components/map/useDeskData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 
 const DeskMap = dynamic(() => import("@/components/map/DeskMap").then((m) => m.DeskMap), { ssr: false });
 
 export default function ViewerPage() {
   const { data, loading, error } = useDeskData();
-  const [query, setQuery] = useState("");
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q") ?? "";
 
   const filtered = useMemo(() => {
     if (!data) return [];
@@ -47,17 +48,7 @@ export default function ViewerPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <CardTitle>Live Floor Map</CardTitle>
-          <div className="w-full max-w-sm">
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by name or desk #"
-              aria-label="Search desks"
-            />
-          </div>
-        </CardHeader>
+        <CardHeader><CardTitle>Live Floor Map</CardTitle></CardHeader>
         <CardContent>
           {error ? (
             <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-6 text-sm text-destructive">

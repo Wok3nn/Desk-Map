@@ -5,6 +5,7 @@ import { broadcast } from "@/lib/realtime";
 export const runtime = "nodejs";
 
 const demoDesks = () => {
+  const lastNames = ["Miller", "Nguyen", "Lopez", "Baker", "Patel", "Hughes", "Diaz", "Rossi", "Khan", "Brooks"];
   return Array.from({ length: 10 }).map((_, index) => {
     const number = index + 1;
     return {
@@ -16,7 +17,7 @@ const demoDesks = () => {
       height: 10,
       label: null,
       occupantFirstName: number % 2 === 0 ? "Alex" : "Jordan",
-      occupantLastName: `Team ${number}`
+      occupantLastName: lastNames[index] ?? ""
     };
   });
 };
@@ -71,6 +72,10 @@ async function ensureSeed() {
       await tx.desk.updateMany({
         where: { id: { startsWith: "demo-" }, OR: [{ width: { gt: 10 } }, { height: { gt: 10 } }] },
         data: { width: 10, height: 10 }
+      });
+      await tx.desk.updateMany({
+        where: { id: { startsWith: "demo-" }, occupantLastName: { startsWith: "Team " } },
+        data: { occupantLastName: null }
       });
     }
 
