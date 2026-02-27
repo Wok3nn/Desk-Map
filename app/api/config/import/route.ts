@@ -31,7 +31,6 @@ export async function POST(request: Request) {
           deskColor: map.deskColor ?? "#8764B8",
           deskTextColor: map.deskTextColor ?? "#F8FAFC",
           deskShape: map.deskShape ?? "rounded",
-          deskIcon: map.deskIcon ?? "none",
           labelPosition: map.labelPosition ?? "top-center",
           showName: map.showName ?? true,
           showNumber: map.showNumber ?? true,

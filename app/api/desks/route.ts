@@ -36,7 +36,6 @@ async function ensureSeed() {
           deskColor: "#8764B8",
           deskTextColor: "#F8FAFC",
           deskShape: "rounded",
-          deskIcon: "none",
           labelPosition: "top-center",
           showName: true,
           showNumber: true,

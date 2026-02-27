@@ -16,7 +16,6 @@ model MapConfig {
   deskColor     String   @default("#8764B8")
   deskTextColor String   @default("#F8FAFC")
   deskShape     String   @default("rounded")
-  deskIcon      String   @default("none")
   labelPosition String   @default("inside")
   showName      Boolean  @default(true)
   showNumber    Boolean  @default(true)

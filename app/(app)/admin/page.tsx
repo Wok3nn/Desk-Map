@@ -184,6 +184,20 @@ export default function AdminPage() {
     toast.message("Removed last desk");
   };
 
+  const handleNormalizeToGrid = () => {
+    if (!data || desks.length === 0) return;
+    const unit = Math.max(1, gridSize);
+    const next = desks.map((desk) => ({
+      ...desk,
+      x: Math.round(desk.x / unit) * unit,
+      y: Math.round(desk.y / unit) * unit,
+      width: Math.max(unit, Math.round(desk.width / unit) * unit),
+      height: Math.max(unit, Math.round(desk.height / unit) * unit)
+    }));
+    setData({ ...data, desks: next });
+    toast.success(`Normalized ${next.length} desks to ${unit} unit grid`);
+  };
+
   const handleSaveEntra = async () => {
     try {
       const res = await fetch("/api/entra/config", {
@@ -328,6 +342,7 @@ export default function AdminPage() {
                 <Info className="h-4 w-4" />
               </Button>
               <Button variant="outline" onClick={handleRemoveLast}>Remove Last</Button>
+              <Button variant="outline" onClick={handleNormalizeToGrid}>Normalize to Grid Unit</Button>
               <Button onClick={handleSave}>Save Layout</Button>
               <Button variant="outline" onClick={handleExportConfig}>Export Config</Button>
               <Button variant="outline" onClick={() => configFileInputRef.current?.click()}>Import Config</Button>
