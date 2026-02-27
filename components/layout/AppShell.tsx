@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { LayoutGrid, Settings } from "lucide-react";
+import { LayoutGrid, Settings, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     brandTitle: "DeskMap",
     brandSubtitle: "Premium seating intelligence"
   });
+  const [resolvedLogoSrc, setResolvedLogoSrc] = useState("/brand-logo.png");
   const viewerQuery = searchParams.get("q") ?? "";
   const isViewer = pathname?.startsWith("/viewer");
 
@@ -48,6 +49,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     loadBranding();
   }, []);
 
+  useEffect(() => {
+    const configured = (brand.brandLogoUrl || "").trim();
+    setResolvedLogoSrc(configured || "/brand-logo.png");
+  }, [brand.brandLogoUrl]);
+
   const navigateWithDirtyCheck = (href: string) => {
     if (href === pathname) return;
     const hasUnsavedChanges = typeof window !== "undefined" && window.localStorage.getItem("deskmap.unsavedChanges") === "1";
@@ -63,10 +69,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="flex w-full items-center justify-between px-4 py-4 md:px-6">
           <div className="flex items-center gap-3">
-            {brand.brandLogoUrl ? (
-              <img src={brand.brandLogoUrl} alt={brand.brandTitle ?? "DeskMap"} className="h-12 w-12 rounded-lg object-contain bg-white p-1 shadow-glow" />
+            {resolvedLogoSrc ? (
+              <img
+                src={resolvedLogoSrc}
+                alt={brand.brandTitle ?? "DeskMap"}
+                className="h-12 w-12 rounded-lg object-contain bg-slate-100 p-1 shadow-glow"
+                onError={() => {
+                  if (resolvedLogoSrc !== "/brand-logo.png") {
+                    setResolvedLogoSrc("/brand-logo.png");
+                  } else {
+                    setResolvedLogoSrc("");
+                  }
+                }}
+              />
             ) : (
-              <img src="/brand-logo.png" alt={brand.brandTitle ?? "DeskMap"} className="h-12 w-12 rounded-lg object-contain bg-white p-1 shadow-glow" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100 shadow-glow">
+                <Sparkles className="h-5 w-5 text-slate-700" />
+              </div>
             )}
             <div>
               <p className="font-display text-lg font-semibold tracking-tight">{brand.brandTitle ?? "DeskMap"}</p>
