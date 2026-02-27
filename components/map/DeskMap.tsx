@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Stage, Layer, Rect, Text, Group, Transformer, Image as KonvaImage } from "react-konva";
+import { Stage, Layer, Rect, Text, Group, Transformer, Image as KonvaImage, Circle } from "react-konva";
 import { motion } from "framer-motion";
 import { Desk, MapConfig } from "@/lib/types";
 
@@ -130,6 +130,11 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
   };
 
   const stageDraggable = mode === "view" || isPanning || isRightMousePanning;
+  const deskColor = map.deskColor || "#8764B8";
+  const labelPosition = map.labelPosition || "inside";
+  const deskIcon = map.deskIcon || "none";
+  const showName = map.showName ?? true;
+  const showNumber = map.showNumber ?? true;
 
   const gridLines = useMemo(() => {
     const lines = [] as JSX.Element[];
@@ -199,7 +204,7 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
                 width={desk.width}
                 height={desk.height}
                 cornerRadius={8}
-                fill={desk.occupantFirstName ? "#2B6FE8" : "#0F172A"}
+                fill={desk.occupantFirstName ? deskColor : "#0F172A"}
                 opacity={mode === "edit" && selectedId === desk.id ? 0.95 : 0.9}
                 shadowBlur={20}
                 shadowColor="rgba(0,0,0,0.2)"
@@ -228,31 +233,52 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
                   });
                 }}
               />
-              <Text
-                x={desk.x + 10}
-                y={desk.y + 10}
-                text={`${desk.number}`}
-                fontSize={14}
-                fontStyle="bold"
-                fill="#E2E8F0"
-                listening={false}
-              />
-              <Text
-                x={desk.x + 10}
-                y={desk.y + 32}
-                text={desk.occupantFirstName ?? "Available"}
-                fontSize={16}
-                fill="#F8FAFC"
-                listening={false}
-              />
-              <Text
-                x={desk.x + 10}
-                y={desk.y + 52}
-                text={desk.occupantLastName ?? ""}
-                fontSize={14}
-                fill="#E2E8F0"
-                listening={false}
-              />
+              {deskIcon === "badge" && (
+                <Circle x={desk.x + desk.width - 12} y={desk.y + 12} radius={6} fill="#F8FAFC" opacity={0.9} listening={false} />
+              )}
+              {deskIcon === "pin" && (
+                <Circle x={desk.x + 12} y={desk.y + 12} radius={5} fill="#F8FAFC" opacity={0.9} listening={false} />
+              )}
+              {(() => {
+                const baseX = labelPosition === "left" ? desk.x - 120 : labelPosition === "right" ? desk.x + desk.width + 10 : desk.x + 10;
+                const baseY = labelPosition === "top" ? desk.y - 48 : labelPosition === "bottom" ? desk.y + desk.height + 8 : desk.y + 10;
+                const textFill = labelPosition === "inside" ? "#E2E8F0" : "#334155";
+                return (
+                  <>
+                    {showNumber && (
+                      <Text
+                        x={baseX}
+                        y={baseY}
+                        text={`${desk.number}`}
+                        fontSize={14}
+                        fontStyle="bold"
+                        fill={textFill}
+                        listening={false}
+                      />
+                    )}
+                    {showName && (
+                      <>
+                        <Text
+                          x={baseX}
+                          y={baseY + (showNumber ? 20 : 0)}
+                          text={desk.occupantFirstName ?? "Available"}
+                          fontSize={16}
+                          fill={labelPosition === "inside" ? "#F8FAFC" : "#0F172A"}
+                          listening={false}
+                        />
+                        <Text
+                          x={baseX}
+                          y={baseY + (showNumber ? 40 : 20)}
+                          text={desk.occupantLastName ?? ""}
+                          fontSize={14}
+                          fill={textFill}
+                          listening={false}
+                        />
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </Group>
           ))}
         </Layer>
@@ -272,8 +298,9 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
         )}
       </Stage>
       <div className="absolute bottom-4 right-4 rounded-full bg-background/90 px-4 py-2 text-xs text-muted-foreground shadow-soft">
-        Zoom: {(scale * 100).toFixed(0)}% · {stageDraggable ? "Pan" : "Select"}
+        Zoom: {(scale * 100).toFixed(0)}% | {stageDraggable ? "Pan" : "Select"}
       </div>
     </motion.div>
   );
 }
+

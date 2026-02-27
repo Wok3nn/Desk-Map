@@ -13,6 +13,11 @@ model MapConfig {
   width         Int
   height        Int
   backgroundUrl String?
+  deskColor     String   @default("#8764B8")
+  deskIcon      String   @default("none")
+  labelPosition String   @default("inside")
+  showName      Boolean  @default(true)
+  showNumber    Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   desks         Desk[]

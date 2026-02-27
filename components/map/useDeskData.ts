@@ -39,12 +39,23 @@ export function useDeskData() {
     };
   }, [fetchData]);
 
-  const saveDesks = useCallback(async (desks: Desk[]) => {
+  const saveDesks = useCallback(async (desks: Desk[], mapStyle?: LayoutPayload["map"]) => {
     if (!data) return;
     const res = await fetch("/api/desks", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ desks })
+      body: JSON.stringify({
+        desks,
+        mapStyle: mapStyle
+          ? {
+              deskColor: mapStyle.deskColor,
+              deskIcon: mapStyle.deskIcon,
+              labelPosition: mapStyle.labelPosition,
+              showName: mapStyle.showName,
+              showNumber: mapStyle.showNumber
+            }
+          : undefined
+      })
     });
     if (!res.ok) throw new Error("Failed to save layout");
     const payload = (await res.json()) as LayoutPayload;

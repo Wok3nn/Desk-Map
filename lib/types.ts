@@ -16,6 +16,11 @@ export type MapConfig = {
   width: number;
   height: number;
   backgroundUrl?: string | null;
+  deskColor?: string;
+  deskIcon?: "none" | "badge" | "pin";
+  labelPosition?: "inside" | "top" | "bottom" | "left" | "right";
+  showName?: boolean;
+  showNumber?: boolean;
   updatedAt: string;
 };
 

@@ -20,7 +20,12 @@ async function ensureMap() {
       name: "HQ Floor 1",
       width: 1200,
       height: 700,
-      backgroundUrl: null
+      backgroundUrl: null,
+      deskColor: "#8764B8",
+      deskIcon: "none",
+      labelPosition: "inside",
+      showName: true,
+      showNumber: true
     }
   });
 }
@@ -66,6 +71,11 @@ export async function POST(request: Request) {
         width: updated.width,
         height: updated.height,
         backgroundUrl: updated.backgroundUrl,
+        deskColor: updated.deskColor,
+        deskIcon: updated.deskIcon,
+        labelPosition: updated.labelPosition,
+        showName: updated.showName,
+        showNumber: updated.showNumber,
         updatedAt: updated.updatedAt
       }
     });

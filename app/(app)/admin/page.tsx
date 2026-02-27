@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
-import { PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Info, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { toast } from "sonner";
 import { useDeskData } from "@/components/map/useDeskData";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import type { Desk } from "@/lib/types";
+import type { Desk, MapConfig } from "@/lib/types";
 
 const createDesk = (number: number): Desk => ({
   id: `desk-${number}-${Date.now()}`,
@@ -30,12 +30,22 @@ const createDesk = (number: number): Desk => ({
 
 const DeskMap = dynamic(() => import("@/components/map/DeskMap").then((m) => m.DeskMap), { ssr: false });
 
+type MapStyle = Pick<MapConfig, "deskColor" | "deskIcon" | "labelPosition" | "showName" | "showNumber">;
+
 export default function AdminPage() {
   const { data, loading, error, saveDesks, setData } = useDeskData();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(true);
+  const [showMapImportInfo, setShowMapImportInfo] = useState(false);
   const [entraLoading, setEntraLoading] = useState(true);
+  const [mapStyle, setMapStyle] = useState<MapStyle>({
+    deskColor: "#8764B8",
+    deskIcon: "none",
+    labelPosition: "inside",
+    showName: true,
+    showNumber: true
+  });
   const [entraConfig, setEntraConfig] = useState({
     tenantId: "",
     clientId: "",
@@ -87,6 +97,17 @@ export default function AdminPage() {
     loadConfig();
   }, []);
 
+  useEffect(() => {
+    if (!data?.map) return;
+    setMapStyle({
+      deskColor: data.map.deskColor ?? "#8764B8",
+      deskIcon: data.map.deskIcon ?? "none",
+      labelPosition: data.map.labelPosition ?? "inside",
+      showName: data.map.showName ?? true,
+      showNumber: data.map.showNumber ?? true
+    });
+  }, [data?.map]);
+
   const nextDeskNumber = useMemo(() => {
     const numbers = new Set(desks.map((desk) => desk.number));
     let candidate = 1;
@@ -104,7 +125,7 @@ export default function AdminPage() {
   const handleSave = async () => {
     if (!saveDesks) return;
     try {
-      await saveDesks(desks);
+      await saveDesks(desks, data ? { ...data.map, ...mapStyle } : undefined);
       toast.success("Layout saved and synced");
     } catch {
       toast.error("Failed to save layout");
@@ -205,24 +226,24 @@ export default function AdminPage() {
           <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <CardTitle>Admin Studio</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Drag to move, use handles to resize, hold Ctrl or right-drag to pan.
-              </p>
+              <p className="text-sm text-muted-foreground">Drag to move, use handles to resize, hold Ctrl or right-drag to pan.</p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-2 text-xs text-muted-foreground">
                 <span>Snap to grid</span>
                 <Switch checked={snapEnabled} onCheckedChange={setSnapEnabled} />
               </div>
-              <Button variant="secondary" onClick={handleAddDesk}>
-                Add Desk {nextDeskNumber}
+              <Button variant="secondary" onClick={handleAddDesk}>Add Desk {nextDeskNumber}</Button>
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>Import Building Map</Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowMapImportInfo((prev) => !prev)}
+                aria-label="Map import information"
+              >
+                <Info className="h-4 w-4" />
               </Button>
-              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                Import Building Map
-              </Button>
-              <Button variant="outline" onClick={handleRemoveLast}>
-                Remove Last
-              </Button>
+              <Button variant="outline" onClick={handleRemoveLast}>Remove Last</Button>
               <Button onClick={handleSave}>Save Layout</Button>
               <input
                 ref={fileInputRef}
@@ -235,14 +256,64 @@ export default function AdminPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {error ? (
-              <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-6 text-sm text-destructive">
-                {error}
+            {showMapImportInfo && (
+              <div className="mb-4 rounded-lg border border-border/60 bg-muted/40 p-3 text-sm text-muted-foreground">
+                Best: SVG (sharp at any zoom, smallest size for floor plans, ideal for pan/zoom). Good fallback: PNG (use high resolution, e.g. 3000px+ wide). Use JPG only for photo-like maps (lossy text/lines).
               </div>
+            )}
+            <div className="mb-4 grid gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 md:grid-cols-5">
+              <div className="grid gap-1">
+                <Label htmlFor="deskColor">Desk Color</Label>
+                <Input
+                  id="deskColor"
+                  type="color"
+                  value={mapStyle.deskColor}
+                  onChange={(event) => setMapStyle({ ...mapStyle, deskColor: event.target.value })}
+                />
+              </div>
+              <div className="grid gap-1">
+                <Label htmlFor="deskIcon">Desk Icon</Label>
+                <Select
+                  id="deskIcon"
+                  value={mapStyle.deskIcon}
+                  onChange={(event) => setMapStyle({ ...mapStyle, deskIcon: event.target.value as MapStyle["deskIcon"] })}
+                >
+                  <option value="none">None</option>
+                  <option value="badge">Badge</option>
+                  <option value="pin">Pin</option>
+                </Select>
+              </div>
+              <div className="grid gap-1">
+                <Label htmlFor="labelPosition">Label Position</Label>
+                <Select
+                  id="labelPosition"
+                  value={mapStyle.labelPosition}
+                  onChange={(event) =>
+                    setMapStyle({ ...mapStyle, labelPosition: event.target.value as MapStyle["labelPosition"] })
+                  }
+                >
+                  <option value="inside">Inside</option>
+                  <option value="top">Top</option>
+                  <option value="bottom">Bottom</option>
+                  <option value="left">Left</option>
+                  <option value="right">Right</option>
+                </Select>
+              </div>
+              <div className="flex items-end gap-2">
+                <Switch checked={mapStyle.showName} onCheckedChange={(checked) => setMapStyle({ ...mapStyle, showName: checked })} />
+                <Label>Show Name</Label>
+              </div>
+              <div className="flex items-end gap-2">
+                <Switch checked={mapStyle.showNumber} onCheckedChange={(checked) => setMapStyle({ ...mapStyle, showNumber: checked })} />
+                <Label>Show Number</Label>
+              </div>
+            </div>
+            {error ? (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-6 text-sm text-destructive">{error}</div>
             ) : (
               <DeskMap
                 mode="edit"
-                map={data.map}
+                map={{ ...data.map, ...mapStyle }}
                 desks={desks}
                 onChange={(next) => setData({ ...data, desks: next })}
                 snapEnabled={snapEnabled}
@@ -272,19 +343,11 @@ export default function AdminPage() {
           <Card className="h-full">
             <CardHeader className="gap-3">
               <CardTitle>Microsoft Entra Sync</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Configure Graph access and seat mapping rules. Secrets are encrypted at rest.
-              </p>
+              <p className="text-sm text-muted-foreground">Configure Graph access and seat mapping rules. Secrets are encrypted at rest.</p>
               <div className="flex flex-wrap items-center gap-2">
-                <Button variant="outline" onClick={handleTestEntra} disabled={entraLoading}>
-                  Test Connection
-                </Button>
-                <Button variant="secondary" onClick={handleSyncEntra} disabled={entraLoading}>
-                  Sync Now
-                </Button>
-                <Button onClick={handleSaveEntra} disabled={entraLoading}>
-                  Save Settings
-                </Button>
+                <Button variant="outline" onClick={handleTestEntra} disabled={entraLoading}>Test Connection</Button>
+                <Button variant="secondary" onClick={handleSyncEntra} disabled={entraLoading}>Sync Now</Button>
+                <Button onClick={handleSaveEntra} disabled={entraLoading}>Save Settings</Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -350,9 +413,7 @@ export default function AdminPage() {
                     type="number"
                     min={5}
                     value={entraConfig.syncIntervalMinutes}
-                    onChange={(event) =>
-                      setEntraConfig({ ...entraConfig, syncIntervalMinutes: Number(event.target.value) })
-                    }
+                    onChange={(event) => setEntraConfig({ ...entraConfig, syncIntervalMinutes: Number(event.target.value) })}
                   />
                 </div>
                 <div className="grid gap-2">

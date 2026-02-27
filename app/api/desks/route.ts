@@ -31,7 +31,12 @@ async function ensureSeed() {
           name: "HQ Floor 1",
           width: 1200,
           height: 700,
-          backgroundUrl: null
+          backgroundUrl: null,
+          deskColor: "#8764B8",
+          deskIcon: "none",
+          labelPosition: "inside",
+          showName: true,
+          showNumber: true
         }
       });
     }
@@ -78,6 +83,7 @@ export async function PUT(request: Request) {
   const map = await ensureSeed();
   const body = await request.json();
   const desks = Array.isArray(body.desks) ? body.desks : [];
+  const mapStyle = body.mapStyle ?? null;
 
   const numbers = new Set<number>();
   for (const desk of desks) {
@@ -88,6 +94,19 @@ export async function PUT(request: Request) {
   }
 
   await prisma.$transaction(async (tx) => {
+    if (mapStyle) {
+      await tx.mapConfig.update({
+        where: { id: map.id },
+        data: {
+          deskColor: typeof mapStyle.deskColor === "string" ? mapStyle.deskColor : undefined,
+          deskIcon: typeof mapStyle.deskIcon === "string" ? mapStyle.deskIcon : undefined,
+          labelPosition: typeof mapStyle.labelPosition === "string" ? mapStyle.labelPosition : undefined,
+          showName: typeof mapStyle.showName === "boolean" ? mapStyle.showName : undefined,
+          showNumber: typeof mapStyle.showNumber === "boolean" ? mapStyle.showNumber : undefined
+        }
+      });
+    }
+
     await tx.desk.deleteMany({});
 
     if (desks.length > 0) {
@@ -108,6 +127,7 @@ export async function PUT(request: Request) {
     }
   });
 
+  const updatedMap = await prisma.mapConfig.findUnique({ where: { id: map.id } });
   const updatedDesks = await prisma.desk.findMany({
     where: { mapId: map.id },
     orderBy: { number: "asc" }
@@ -115,5 +135,5 @@ export async function PUT(request: Request) {
 
   broadcast("layout", { updatedAt: new Date().toISOString() });
 
-  return NextResponse.json({ map, desks: updatedDesks });
+  return NextResponse.json({ map: updatedMap ?? map, desks: updatedDesks });
 }
