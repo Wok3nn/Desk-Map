@@ -16,11 +16,11 @@ import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { Desk, MapConfig } from "@/lib/types";
 
-const createDesk = (number: number, unit: number): Desk => ({
-  id: `desk-${number}-${Date.now()}`,
+const createDesk = (id: string, number: number, unit: number, x: number, y: number): Desk => ({
+  id,
   number,
-  x: 120,
-  y: 120,
+  x,
+  y,
   width: unit,
   height: unit,
   label: null,
@@ -60,6 +60,7 @@ export default function AdminPage() {
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [showMapImportInfo, setShowMapImportInfo] = useState(false);
   const [entraLoading, setEntraLoading] = useState(true);
+  const [lastCreatedDeskId, setLastCreatedDeskId] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const savedSnapshotRef = useRef<string | null>(null);
   const [mapStyle, setMapStyle] = useState<MapStyle>({
@@ -215,8 +216,14 @@ export default function AdminPage() {
   const handleAddDesk = () => {
     if (!data) return;
     const unit = Math.max(1, gridSize);
-    const next = [...desks, createDesk(nextDeskNumber, unit)];
+    const anchor = lastCreatedDeskId ? desks.find((desk) => desk.id === lastCreatedDeskId) : null;
+    const x = anchor ? anchor.x + anchor.width + unit : 120;
+    const y = anchor ? anchor.y : 120;
+    const id = `desk-${nextDeskNumber}-${Date.now()}`;
+    const newDesk = createDesk(id, nextDeskNumber, unit, x, y);
+    const next = [...desks, newDesk];
     setData({ ...data, desks: next });
+    setLastCreatedDeskId(newDesk.id);
     toast.success(`Desk ${nextDeskNumber} added`);
   };
 
@@ -545,6 +552,9 @@ export default function AdminPage() {
                   <div className="grid gap-1 md:col-span-2">
                     <Label htmlFor="brandLogoUrl">Logo URL (optional)</Label>
                     <Input id="brandLogoUrl" value={mapStyle.brandLogoUrl ?? ""} onChange={(event) => setMapStyle({ ...mapStyle, brandLogoUrl: event.target.value })} placeholder="https://..." />
+                    <p className="text-xs text-muted-foreground">
+                      Paste a public image URL (for example `https://your-domain/logo.png`). Local file paths are not supported here.
+                    </p>
                   </div>
                   <div className="grid gap-1">
                     <Label htmlFor="brandTitle">Header Title</Label>

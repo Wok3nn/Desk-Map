@@ -94,7 +94,12 @@ export function DeskMap({
   }, [map.height, map.width]);
 
   useEffect(() => {
-    if (!trRef.current || !selectedId) return;
+    if (!trRef.current) return;
+    if (!selectedId) {
+      trRef.current.nodes([]);
+      trRef.current.getLayer()?.batchDraw();
+      return;
+    }
     const stage = stageRef.current;
     const selectedNode = stage?.findOne(`#desk-${selectedId}`);
     if (selectedNode) {
@@ -102,6 +107,18 @@ export function DeskMap({
       trRef.current.getLayer()?.batchDraw();
     }
   }, [selectedId, desks]);
+
+  useEffect(() => {
+    if (mode !== "edit") return;
+    const onPointerDown = (event: PointerEvent) => {
+      const root = containerRef.current;
+      const target = event.target as Node | null;
+      if (!root || (target && root.contains(target))) return;
+      setSelectedId(null);
+    };
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, [mode]);
 
   const handleWheel = (event: any) => {
     event.evt.preventDefault();
