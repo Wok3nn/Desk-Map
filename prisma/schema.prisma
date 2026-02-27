@@ -14,6 +14,7 @@ model MapConfig {
   height        Int
   backgroundUrl String?
   deskColor     String   @default("#8764B8")
+  deskTextColor String   @default("#F8FAFC")
   deskShape     String   @default("rounded")
   deskIcon      String   @default("none")
   labelPosition String   @default("inside")
@@ -21,6 +22,8 @@ model MapConfig {
   showNumber    Boolean  @default(true)
   deskTextSize  Int      @default(14)
   deskVisibleWhenSearching Boolean @default(false)
+  gridSize      Int      @default(10)
+  gridVisible   Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   desks         Desk[]

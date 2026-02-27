@@ -32,7 +32,16 @@ const DeskMap = dynamic(() => import("@/components/map/DeskMap").then((m) => m.D
 
 type MapStyle = Pick<
   MapConfig,
-  "deskColor" | "deskShape" | "labelPosition" | "showName" | "showNumber" | "deskTextSize" | "deskVisibleWhenSearching"
+  | "deskColor"
+  | "deskTextColor"
+  | "deskShape"
+  | "labelPosition"
+  | "showName"
+  | "showNumber"
+  | "deskTextSize"
+  | "deskVisibleWhenSearching"
+  | "gridSize"
+  | "gridVisible"
 >;
 
 export default function AdminPage() {
@@ -47,12 +56,15 @@ export default function AdminPage() {
   const [entraLoading, setEntraLoading] = useState(true);
   const [mapStyle, setMapStyle] = useState<MapStyle>({
     deskColor: "#8764B8",
+    deskTextColor: "#F8FAFC",
     deskShape: "rounded",
     labelPosition: "top-center",
     showName: true,
     showNumber: true,
     deskTextSize: 14,
-    deskVisibleWhenSearching: false
+    deskVisibleWhenSearching: false,
+    gridSize: 10,
+    gridVisible: true
   });
   const [mapSize, setMapSize] = useState({ width: 1200, height: 700 });
   const [entraConfig, setEntraConfig] = useState({
@@ -110,13 +122,18 @@ export default function AdminPage() {
     if (!data?.map) return;
     setMapStyle({
       deskColor: data.map.deskColor ?? "#8764B8",
+      deskTextColor: data.map.deskTextColor ?? "#F8FAFC",
       deskShape: data.map.deskShape ?? "rounded",
       labelPosition: data.map.labelPosition ?? "top-center",
       showName: data.map.showName ?? true,
       showNumber: data.map.showNumber ?? true,
       deskTextSize: data.map.deskTextSize ?? 14,
-      deskVisibleWhenSearching: data.map.deskVisibleWhenSearching ?? false
+      deskVisibleWhenSearching: data.map.deskVisibleWhenSearching ?? false,
+      gridSize: data.map.gridSize ?? 10,
+      gridVisible: data.map.gridVisible ?? true
     });
+    setGridSize(data.map.gridSize ?? 10);
+    setGridEnabled(data.map.gridVisible ?? true);
     setMapSize({
       width: data.map.width ?? 1200,
       height: data.map.height ?? 700
@@ -147,6 +164,8 @@ export default function AdminPage() {
           ? {
               ...data.map,
               ...mapStyle,
+              gridSize,
+              gridVisible: gridEnabled,
               width: mapSize.width,
               height: mapSize.height
             }
@@ -340,6 +359,10 @@ export default function AdminPage() {
               <div className="grid gap-1">
                 <Label htmlFor="deskColor">Desk Color</Label>
                 <Input id="deskColor" type="color" value={mapStyle.deskColor} onChange={(event) => setMapStyle({ ...mapStyle, deskColor: event.target.value })} />
+              </div>
+              <div className="grid gap-1">
+                <Label htmlFor="deskTextColor">Text Color</Label>
+                <Input id="deskTextColor" type="color" value={mapStyle.deskTextColor} onChange={(event) => setMapStyle({ ...mapStyle, deskTextColor: event.target.value })} />
               </div>
               <div className="grid gap-1">
                 <Label htmlFor="deskShape">Desk Shape</Label>

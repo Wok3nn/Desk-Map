@@ -17,6 +17,7 @@ export type MapConfig = {
   height: number;
   backgroundUrl?: string | null;
   deskColor?: string;
+  deskTextColor?: string;
   deskShape?: "rectangle" | "rounded" | "capsule" | "circle" | "diamond";
   labelPosition?:
     | "inside"
@@ -34,6 +35,8 @@ export type MapConfig = {
   showNumber?: boolean;
   deskTextSize?: number;
   deskVisibleWhenSearching?: boolean;
+  gridSize?: number;
+  gridVisible?: boolean;
   updatedAt: string;
 };
 

@@ -49,12 +49,15 @@ export function useDeskData() {
         mapStyle: mapStyle
           ? {
               deskColor: mapStyle.deskColor,
+              deskTextColor: mapStyle.deskTextColor,
               deskShape: mapStyle.deskShape,
               labelPosition: mapStyle.labelPosition,
               showName: mapStyle.showName,
               showNumber: mapStyle.showNumber,
               deskTextSize: mapStyle.deskTextSize,
               deskVisibleWhenSearching: mapStyle.deskVisibleWhenSearching,
+              gridSize: mapStyle.gridSize,
+              gridVisible: mapStyle.gridVisible,
               width: mapStyle.width,
               height: mapStyle.height
             }

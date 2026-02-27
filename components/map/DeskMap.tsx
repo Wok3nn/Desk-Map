@@ -290,10 +290,10 @@ export function DeskMap({
                       : effectivePosition === "bottom-left" || effectivePosition === "bottom-center" || effectivePosition === "bottom-right"
                         ? bottomY
                         : insideY;
-                const textFill = effectivePosition === "inside" ? "#E2E8F0" : "#334155";
+                const textColor = map.deskTextColor || (effectivePosition === "inside" ? "#E2E8F0" : "#334155");
                 return (
                   <>
-                    {showNumber && <Text x={baseX} y={baseY} width={labelWidth} align="center" text={`${desk.number}`} fontSize={numberSize} fontStyle="bold" fill={textFill} listening={false} />}
+                    {showNumber && <Text x={baseX} y={baseY} width={labelWidth} align="center" text={`${desk.number}`} fontSize={numberSize} fontStyle="bold" fill={textColor} listening={false} />}
                     {showName && (
                       <>
                         <Text
@@ -303,7 +303,7 @@ export function DeskMap({
                           y={baseY + (showNumber ? numberSize + 6 : 0)}
                           text={desk.occupantFirstName ?? "Available"}
                           fontSize={firstNameSize}
-                          fill={effectivePosition === "inside" ? "#F8FAFC" : "#0F172A"}
+                          fill={textColor}
                           listening={false}
                         />
                         <Text
@@ -313,7 +313,7 @@ export function DeskMap({
                           y={baseY + (showNumber ? numberSize + firstNameSize + 8 : firstNameSize + 4)}
                           text={desk.occupantLastName ?? ""}
                           fontSize={lastNameSize}
-                          fill={textFill}
+                          fill={textColor}
                           listening={false}
                         />
                       </>

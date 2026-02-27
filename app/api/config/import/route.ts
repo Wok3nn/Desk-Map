@@ -29,13 +29,16 @@ export async function POST(request: Request) {
           height: map.height,
           backgroundUrl: map.backgroundUrl ?? null,
           deskColor: map.deskColor ?? "#8764B8",
+          deskTextColor: map.deskTextColor ?? "#F8FAFC",
           deskShape: map.deskShape ?? "rounded",
           deskIcon: map.deskIcon ?? "none",
           labelPosition: map.labelPosition ?? "top-center",
           showName: map.showName ?? true,
           showNumber: map.showNumber ?? true,
           deskTextSize: map.deskTextSize ?? 14,
-          deskVisibleWhenSearching: map.deskVisibleWhenSearching ?? false
+          deskVisibleWhenSearching: map.deskVisibleWhenSearching ?? false,
+          gridSize: map.gridSize ?? 10,
+          gridVisible: map.gridVisible ?? true
         }
       });
 

@@ -34,13 +34,16 @@ async function ensureSeed() {
           height: 700,
           backgroundUrl: null,
           deskColor: "#8764B8",
+          deskTextColor: "#F8FAFC",
           deskShape: "rounded",
           deskIcon: "none",
           labelPosition: "top-center",
           showName: true,
           showNumber: true,
           deskTextSize: 14,
-          deskVisibleWhenSearching: false
+          deskVisibleWhenSearching: false,
+          gridSize: 10,
+          gridVisible: true
         }
       });
     }
@@ -113,6 +116,7 @@ export async function PUT(request: Request) {
         where: { id: map.id },
         data: {
           deskColor: typeof mapStyle.deskColor === "string" ? mapStyle.deskColor : undefined,
+          deskTextColor: typeof mapStyle.deskTextColor === "string" ? mapStyle.deskTextColor : undefined,
           deskShape: typeof mapStyle.deskShape === "string" ? mapStyle.deskShape : undefined,
           labelPosition: typeof mapStyle.labelPosition === "string" ? mapStyle.labelPosition : undefined,
           showName: typeof mapStyle.showName === "boolean" ? mapStyle.showName : undefined,
@@ -122,6 +126,8 @@ export async function PUT(request: Request) {
             typeof mapStyle.deskVisibleWhenSearching === "boolean"
               ? mapStyle.deskVisibleWhenSearching
               : undefined,
+          gridSize: typeof mapStyle.gridSize === "number" ? mapStyle.gridSize : undefined,
+          gridVisible: typeof mapStyle.gridVisible === "boolean" ? mapStyle.gridVisible : undefined,
           width: typeof mapStyle.width === "number" ? mapStyle.width : undefined,
           height: typeof mapStyle.height === "number" ? mapStyle.height : undefined
         }

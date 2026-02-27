@@ -22,13 +22,16 @@ async function ensureMap() {
       height: 700,
       backgroundUrl: null,
       deskColor: "#8764B8",
+      deskTextColor: "#F8FAFC",
       deskShape: "rounded",
       deskIcon: "none",
       labelPosition: "top-center",
       showName: true,
       showNumber: true,
       deskTextSize: 14,
-      deskVisibleWhenSearching: false
+      deskVisibleWhenSearching: false,
+      gridSize: 10,
+      gridVisible: true
     }
   });
 }
@@ -75,12 +78,15 @@ export async function POST(request: Request) {
         height: updated.height,
         backgroundUrl: updated.backgroundUrl,
         deskColor: updated.deskColor,
+        deskTextColor: updated.deskTextColor,
         deskShape: updated.deskShape,
         labelPosition: updated.labelPosition,
         showName: updated.showName,
         showNumber: updated.showNumber,
         deskTextSize: updated.deskTextSize,
         deskVisibleWhenSearching: updated.deskVisibleWhenSearching,
+        gridSize: updated.gridSize,
+        gridVisible: updated.gridVisible,
         updatedAt: updated.updatedAt
       }
     });
