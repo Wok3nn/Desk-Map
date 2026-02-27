@@ -17,6 +17,7 @@ export async function GET() {
           mappingRegex: config.mappingRegex,
           adminGroupId: config.adminGroupId,
           authMode: config.authMode,
+          hasClientSecret: Boolean(config.clientSecretEnc),
           lastTestAt: config.lastTestAt,
           lastSyncAt: config.lastSyncAt,
           lastSyncStatus: config.lastSyncStatus
@@ -64,6 +65,7 @@ export async function PUT(request: Request) {
         mappingRegex: saved.mappingRegex,
         adminGroupId: saved.adminGroupId,
         authMode: saved.authMode,
+        hasClientSecret: Boolean(saved.clientSecretEnc),
         lastTestAt: saved.lastTestAt,
         lastSyncAt: saved.lastSyncAt,
         lastSyncStatus: saved.lastSyncStatus

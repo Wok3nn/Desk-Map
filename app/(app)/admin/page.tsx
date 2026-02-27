@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
-import { Info, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, Info, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { toast } from "sonner";
 import { useDeskData } from "@/components/map/useDeskData";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,9 @@ export default function AdminPage() {
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [showMapImportInfo, setShowMapImportInfo] = useState(false);
   const [entraLoading, setEntraLoading] = useState(true);
+  const [showTenantId, setShowTenantId] = useState(false);
+  const [showClientId, setShowClientId] = useState(false);
+  const [hasStoredClientSecret, setHasStoredClientSecret] = useState(false);
   const [lastCreatedDeskId, setLastCreatedDeskId] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const savedSnapshotRef = useRef<string | null>(null);
@@ -114,6 +117,7 @@ export default function AdminPage() {
             adminGroupId: payload.config.adminGroupId ?? "",
             authMode: payload.config.authMode ?? "public"
           }));
+          setHasStoredClientSecret(Boolean(payload.config.hasClientSecret));
           setEntraMeta({
             lastTestAt: payload.config.lastTestAt ?? undefined,
             lastSyncAt: payload.config.lastSyncAt ?? undefined,
@@ -302,6 +306,7 @@ export default function AdminPage() {
       });
       if (!res.ok) throw new Error("Failed to save Entra config");
       const payload = await res.json();
+      setHasStoredClientSecret(Boolean(payload.config.hasClientSecret) || entraConfig.clientSecret.length > 0);
       setEntraMeta({
         lastTestAt: payload.config.lastTestAt ?? undefined,
         lastSyncAt: payload.config.lastSyncAt ?? undefined,
@@ -633,7 +638,7 @@ export default function AdminPage() {
           <Card className="h-full">
             <CardHeader className="gap-3">
               <CardTitle>Microsoft Entra Sync</CardTitle>
-              <p className="text-sm text-muted-foreground">Configure Graph access and seat mapping rules. Secrets are encrypted at rest.</p>
+              <p className="text-sm text-muted-foreground">Configure Graph access and seat mapping rules. Graph API must include `User.Read.All` (application permission) with admin consent. Secrets are encrypted at rest.</p>
               <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" onClick={handleTestEntra} disabled={entraLoading}>Test Connection</Button>
                 <Button variant="secondary" onClick={handleSyncEntra} disabled={entraLoading}>Sync Now</Button>
@@ -644,15 +649,27 @@ export default function AdminPage() {
               <div className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="tenantId">Tenant ID</Label>
-                  <Input id="tenantId" value={entraConfig.tenantId} onChange={(event) => setEntraConfig({ ...entraConfig, tenantId: event.target.value })} placeholder="00000000-0000-0000-0000-000000000000" />
+                  <div className="flex gap-2">
+                    <Input id="tenantId" type={showTenantId ? "text" : "password"} value={entraConfig.tenantId} onChange={(event) => setEntraConfig({ ...entraConfig, tenantId: event.target.value })} placeholder="00000000-0000-0000-0000-000000000000" />
+                    <Button type="button" variant="outline" onClick={() => setShowTenantId((prev) => !prev)}>{showTenantId ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
+                  </div>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="clientId">Client ID</Label>
-                  <Input id="clientId" value={entraConfig.clientId} onChange={(event) => setEntraConfig({ ...entraConfig, clientId: event.target.value })} placeholder="00000000-0000-0000-0000-000000000000" />
+                  <div className="flex gap-2">
+                    <Input id="clientId" type={showClientId ? "text" : "password"} value={entraConfig.clientId} onChange={(event) => setEntraConfig({ ...entraConfig, clientId: event.target.value })} placeholder="00000000-0000-0000-0000-000000000000" />
+                    <Button type="button" variant="outline" onClick={() => setShowClientId((prev) => !prev)}>{showClientId ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
+                  </div>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="clientSecret">Client Secret</Label>
                   <Input id="clientSecret" type="password" value={entraConfig.clientSecret} onChange={(event) => setEntraConfig({ ...entraConfig, clientSecret: event.target.value })} placeholder="Store securely" />
+                  {hasStoredClientSecret && entraConfig.clientSecret.length === 0 && (
+                    <div className="flex items-center gap-1 text-xs text-emerald-600">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Client secret is already saved.
+                    </div>
+                  )}
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="scopes">Scopes</Label>
@@ -663,8 +680,9 @@ export default function AdminPage() {
                   <Input id="mappingPrefix" value={entraConfig.mappingPrefix} onChange={(event) => setEntraConfig({ ...entraConfig, mappingPrefix: event.target.value })} placeholder="Desk-" />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="mappingRegex">Mapping Regex (optional)</Label>
+                  <Label htmlFor="mappingRegex">Advanced Desk Match (optional)</Label>
                   <Input id="mappingRegex" value={entraConfig.mappingRegex} onChange={(event) => setEntraConfig({ ...entraConfig, mappingRegex: event.target.value })} placeholder="Desk-(\\d+)" />
+                  <p className="text-xs text-muted-foreground">Only needed for special formats. Leave empty for normal values like `1`, `2`, or `Desk-1`.</p>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="syncInterval">Sync Interval (minutes)</Label>
@@ -673,13 +691,15 @@ export default function AdminPage() {
                 <div className="grid gap-2">
                   <Label htmlFor="adminGroupId">Admin Group Object ID</Label>
                   <Input id="adminGroupId" value={entraConfig.adminGroupId} onChange={(event) => setEntraConfig({ ...entraConfig, adminGroupId: event.target.value })} />
+                  <p className="text-xs text-muted-foreground">Planned use: restrict Admin Studio access to members of this Entra group.</p>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="authMode">Viewer Access</Label>
+                  <Label htmlFor="authMode">App Access Mode</Label>
                   <Select id="authMode" value={entraConfig.authMode} onChange={(event) => setEntraConfig({ ...entraConfig, authMode: event.target.value })}>
                     <option value="public">Public (no login)</option>
                     <option value="entra">Entra login required</option>
                   </Select>
+                  <p className="text-xs text-muted-foreground">Note: Entra login enforcement/session behavior is not wired yet in this build.</p>
                 </div>
               </div>
               <div className="mt-6 grid gap-2 text-xs text-muted-foreground">
