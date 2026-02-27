@@ -73,7 +73,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <img
                 src={resolvedLogoSrc}
                 alt={brand.brandTitle ?? "DeskMap"}
-                className="h-12 w-12 rounded-lg object-contain bg-slate-100 p-1 shadow-glow"
+                className="h-12 w-12 rounded-lg object-contain bg-gradient-to-br from-slate-800 to-slate-600 p-1.5 shadow-glow ring-1 ring-black/10"
                 onError={() => {
                   if (resolvedLogoSrc !== "/brand-logo.png") {
                     setResolvedLogoSrc("/brand-logo.png");
@@ -83,8 +83,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 }}
               />
             ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100 shadow-glow">
-                <Sparkles className="h-5 w-5 text-slate-700" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-600 shadow-glow ring-1 ring-black/10">
+                <Sparkles className="h-5 w-5 text-slate-100" />
               </div>
             )}
             <div>
