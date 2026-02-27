@@ -16,13 +16,13 @@ import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { Desk, MapConfig } from "@/lib/types";
 
-const createDesk = (number: number): Desk => ({
+const createDesk = (number: number, unit: number): Desk => ({
   id: `desk-${number}-${Date.now()}`,
   number,
   x: 120,
   y: 120,
-  width: 140,
-  height: 90,
+  width: unit,
+  height: unit,
   label: null,
   occupantFirstName: null,
   occupantLastName: null
@@ -30,7 +30,10 @@ const createDesk = (number: number): Desk => ({
 
 const DeskMap = dynamic(() => import("@/components/map/DeskMap").then((m) => m.DeskMap), { ssr: false });
 
-type MapStyle = Pick<MapConfig, "deskColor" | "deskShape" | "deskIcon" | "labelPosition" | "showName" | "showNumber">;
+type MapStyle = Pick<
+  MapConfig,
+  "deskColor" | "deskShape" | "labelPosition" | "showName" | "showNumber" | "deskTextSize" | "deskVisibleWhenSearching"
+>;
 
 export default function AdminPage() {
   const { data, loading, error, saveDesks, setData } = useDeskData();
@@ -44,10 +47,11 @@ export default function AdminPage() {
   const [mapStyle, setMapStyle] = useState<MapStyle>({
     deskColor: "#8764B8",
     deskShape: "rounded",
-    deskIcon: "none",
     labelPosition: "inside",
     showName: true,
-    showNumber: true
+    showNumber: true,
+    deskTextSize: 14,
+    deskVisibleWhenSearching: false
   });
   const [mapSize, setMapSize] = useState({ width: 1200, height: 700 });
   const [entraConfig, setEntraConfig] = useState({
@@ -106,10 +110,11 @@ export default function AdminPage() {
     setMapStyle({
       deskColor: data.map.deskColor ?? "#8764B8",
       deskShape: data.map.deskShape ?? "rounded",
-      deskIcon: data.map.deskIcon ?? "none",
       labelPosition: data.map.labelPosition ?? "inside",
       showName: data.map.showName ?? true,
-      showNumber: data.map.showNumber ?? true
+      showNumber: data.map.showNumber ?? true,
+      deskTextSize: data.map.deskTextSize ?? 14,
+      deskVisibleWhenSearching: data.map.deskVisibleWhenSearching ?? false
     });
     setMapSize({
       width: data.map.width ?? 1200,
@@ -126,7 +131,8 @@ export default function AdminPage() {
 
   const handleAddDesk = () => {
     if (!data) return;
-    const next = [...desks, createDesk(nextDeskNumber)];
+    const unit = Math.max(1, gridSize);
+    const next = [...desks, createDesk(nextDeskNumber, unit)];
     setData({ ...data, desks: next });
     toast.success(`Desk ${nextDeskNumber} added`);
   };
@@ -258,12 +264,7 @@ export default function AdminPage() {
               </div>
               <Button variant="secondary" onClick={handleAddDesk}>Add Desk {nextDeskNumber}</Button>
               <Button variant="outline" onClick={() => fileInputRef.current?.click()}>Import Building Map</Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowMapImportInfo((prev) => !prev)}
-                aria-label="Map import information"
-              >
+              <Button variant="ghost" size="icon" onClick={() => setShowMapImportInfo((prev) => !prev)} aria-label="Map import information">
                 <Info className="h-4 w-4" />
               </Button>
               <Button variant="outline" onClick={handleRemoveLast}>Remove Last</Button>
@@ -287,25 +288,11 @@ export default function AdminPage() {
             <div className="mb-4 grid gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 md:grid-cols-5">
               <div className="grid gap-1">
                 <Label htmlFor="deskColor">Desk Color</Label>
-                <Input
-                  id="deskColor"
-                  type="color"
-                  value={mapStyle.deskColor}
-                  onChange={(event) => setMapStyle({ ...mapStyle, deskColor: event.target.value })}
-                />
+                <Input id="deskColor" type="color" value={mapStyle.deskColor} onChange={(event) => setMapStyle({ ...mapStyle, deskColor: event.target.value })} />
               </div>
               <div className="grid gap-1">
                 <Label htmlFor="deskShape">Desk Shape</Label>
-                <Select
-                  id="deskShape"
-                  value={mapStyle.deskShape}
-                  onChange={(event) =>
-                    setMapStyle({
-                      ...mapStyle,
-                      deskShape: event.target.value as MapStyle["deskShape"]
-                    })
-                  }
-                >
+                <Select id="deskShape" value={mapStyle.deskShape} onChange={(event) => setMapStyle({ ...mapStyle, deskShape: event.target.value as MapStyle["deskShape"] })}>
                   <option value="rectangle">Rectangle</option>
                   <option value="rounded">Rounded</option>
                   <option value="capsule">Capsule</option>
@@ -314,32 +301,25 @@ export default function AdminPage() {
                 </Select>
               </div>
               <div className="grid gap-1">
-                <Label htmlFor="deskIcon">Desk Icon</Label>
-                <Select
-                  id="deskIcon"
-                  value={mapStyle.deskIcon}
-                  onChange={(event) => setMapStyle({ ...mapStyle, deskIcon: event.target.value as MapStyle["deskIcon"] })}
-                >
-                  <option value="none">None</option>
-                  <option value="badge">Badge</option>
-                  <option value="pin">Pin</option>
-                </Select>
-              </div>
-              <div className="grid gap-1">
                 <Label htmlFor="labelPosition">Label Position</Label>
-                <Select
-                  id="labelPosition"
-                  value={mapStyle.labelPosition}
-                  onChange={(event) =>
-                    setMapStyle({ ...mapStyle, labelPosition: event.target.value as MapStyle["labelPosition"] })
-                  }
-                >
+                <Select id="labelPosition" value={mapStyle.labelPosition} onChange={(event) => setMapStyle({ ...mapStyle, labelPosition: event.target.value as MapStyle["labelPosition"] })}>
                   <option value="inside">Inside</option>
                   <option value="top">Top</option>
                   <option value="bottom">Bottom</option>
                   <option value="left">Left</option>
                   <option value="right">Right</option>
                 </Select>
+              </div>
+              <div className="grid gap-1">
+                <Label htmlFor="deskTextSize">Desk Text Size</Label>
+                <Input
+                  id="deskTextSize"
+                  type="number"
+                  min={8}
+                  max={28}
+                  value={mapStyle.deskTextSize}
+                  onChange={(event) => setMapStyle({ ...mapStyle, deskTextSize: Math.max(8, Math.min(28, Number(event.target.value) || 14)) })}
+                />
               </div>
               <div className="flex items-end gap-2">
                 <Switch checked={mapStyle.showName} onCheckedChange={(checked) => setMapStyle({ ...mapStyle, showName: checked })} />
@@ -349,37 +329,23 @@ export default function AdminPage() {
                 <Switch checked={mapStyle.showNumber} onCheckedChange={(checked) => setMapStyle({ ...mapStyle, showNumber: checked })} />
                 <Label>Show Number</Label>
               </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={mapStyle.deskVisibleWhenSearching} onCheckedChange={(checked) => setMapStyle({ ...mapStyle, deskVisibleWhenSearching: checked })} />
+                <Label>Desk Visible When Searching</Label>
+              </div>
             </div>
             <div className="mb-4 grid gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 md:grid-cols-4">
               <div className="grid gap-1">
                 <Label htmlFor="gridSize">Grid Size</Label>
-                <Input
-                  id="gridSize"
-                  type="number"
-                  min={1}
-                  value={gridSize}
-                  onChange={(event) => setGridSize(Math.max(1, Number(event.target.value) || 1))}
-                />
+                <Input id="gridSize" type="number" min={1} value={gridSize} onChange={(event) => setGridSize(Math.max(1, Number(event.target.value) || 1))} />
               </div>
               <div className="grid gap-1">
                 <Label htmlFor="mapWidth">Map Width</Label>
-                <Input
-                  id="mapWidth"
-                  type="number"
-                  min={200}
-                  value={mapSize.width}
-                  onChange={(event) => setMapSize({ ...mapSize, width: Math.max(200, Number(event.target.value) || 200) })}
-                />
+                <Input id="mapWidth" type="number" min={200} value={mapSize.width} onChange={(event) => setMapSize({ ...mapSize, width: Math.max(200, Number(event.target.value) || 200) })} />
               </div>
               <div className="grid gap-1">
                 <Label htmlFor="mapHeight">Map Height</Label>
-                <Input
-                  id="mapHeight"
-                  type="number"
-                  min={200}
-                  value={mapSize.height}
-                  onChange={(event) => setMapSize({ ...mapSize, height: Math.max(200, Number(event.target.value) || 200) })}
-                />
+                <Input id="mapHeight" type="number" min={200} value={mapSize.height} onChange={(event) => setMapSize({ ...mapSize, height: Math.max(200, Number(event.target.value) || 200) })} />
               </div>
             </div>
             {error ? (
@@ -430,83 +396,39 @@ export default function AdminPage() {
               <div className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="tenantId">Tenant ID</Label>
-                  <Input
-                    id="tenantId"
-                    value={entraConfig.tenantId}
-                    onChange={(event) => setEntraConfig({ ...entraConfig, tenantId: event.target.value })}
-                    placeholder="00000000-0000-0000-0000-000000000000"
-                  />
+                  <Input id="tenantId" value={entraConfig.tenantId} onChange={(event) => setEntraConfig({ ...entraConfig, tenantId: event.target.value })} placeholder="00000000-0000-0000-0000-000000000000" />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="clientId">Client ID</Label>
-                  <Input
-                    id="clientId"
-                    value={entraConfig.clientId}
-                    onChange={(event) => setEntraConfig({ ...entraConfig, clientId: event.target.value })}
-                    placeholder="00000000-0000-0000-0000-000000000000"
-                  />
+                  <Input id="clientId" value={entraConfig.clientId} onChange={(event) => setEntraConfig({ ...entraConfig, clientId: event.target.value })} placeholder="00000000-0000-0000-0000-000000000000" />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="clientSecret">Client Secret</Label>
-                  <Input
-                    id="clientSecret"
-                    type="password"
-                    value={entraConfig.clientSecret}
-                    onChange={(event) => setEntraConfig({ ...entraConfig, clientSecret: event.target.value })}
-                    placeholder="Store securely"
-                  />
+                  <Input id="clientSecret" type="password" value={entraConfig.clientSecret} onChange={(event) => setEntraConfig({ ...entraConfig, clientSecret: event.target.value })} placeholder="Store securely" />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="scopes">Scopes</Label>
-                  <Textarea
-                    id="scopes"
-                    value={entraConfig.scopes}
-                    onChange={(event) => setEntraConfig({ ...entraConfig, scopes: event.target.value })}
-                  />
+                  <Textarea id="scopes" value={entraConfig.scopes} onChange={(event) => setEntraConfig({ ...entraConfig, scopes: event.target.value })} />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="mappingPrefix">Office Location Prefix</Label>
-                  <Input
-                    id="mappingPrefix"
-                    value={entraConfig.mappingPrefix}
-                    onChange={(event) => setEntraConfig({ ...entraConfig, mappingPrefix: event.target.value })}
-                    placeholder="Desk-"
-                  />
+                  <Input id="mappingPrefix" value={entraConfig.mappingPrefix} onChange={(event) => setEntraConfig({ ...entraConfig, mappingPrefix: event.target.value })} placeholder="Desk-" />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="mappingRegex">Mapping Regex (optional)</Label>
-                  <Input
-                    id="mappingRegex"
-                    value={entraConfig.mappingRegex}
-                    onChange={(event) => setEntraConfig({ ...entraConfig, mappingRegex: event.target.value })}
-                    placeholder="Desk-(\\d+)"
-                  />
+                  <Input id="mappingRegex" value={entraConfig.mappingRegex} onChange={(event) => setEntraConfig({ ...entraConfig, mappingRegex: event.target.value })} placeholder="Desk-(\\d+)" />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="syncInterval">Sync Interval (minutes)</Label>
-                  <Input
-                    id="syncInterval"
-                    type="number"
-                    min={5}
-                    value={entraConfig.syncIntervalMinutes}
-                    onChange={(event) => setEntraConfig({ ...entraConfig, syncIntervalMinutes: Number(event.target.value) })}
-                  />
+                  <Input id="syncInterval" type="number" min={5} value={entraConfig.syncIntervalMinutes} onChange={(event) => setEntraConfig({ ...entraConfig, syncIntervalMinutes: Number(event.target.value) })} />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="adminGroupId">Admin Group Object ID</Label>
-                  <Input
-                    id="adminGroupId"
-                    value={entraConfig.adminGroupId}
-                    onChange={(event) => setEntraConfig({ ...entraConfig, adminGroupId: event.target.value })}
-                  />
+                  <Input id="adminGroupId" value={entraConfig.adminGroupId} onChange={(event) => setEntraConfig({ ...entraConfig, adminGroupId: event.target.value })} />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="authMode">Viewer Access</Label>
-                  <Select
-                    id="authMode"
-                    value={entraConfig.authMode}
-                    onChange={(event) => setEntraConfig({ ...entraConfig, authMode: event.target.value })}
-                  >
+                  <Select id="authMode" value={entraConfig.authMode} onChange={(event) => setEntraConfig({ ...entraConfig, authMode: event.target.value })}>
                     <option value="public">Public (no login)</option>
                     <option value="entra">Entra login required</option>
                   </Select>

@@ -26,7 +26,9 @@ async function ensureMap() {
       deskIcon: "none",
       labelPosition: "inside",
       showName: true,
-      showNumber: true
+      showNumber: true,
+      deskTextSize: 14,
+      deskVisibleWhenSearching: false
     }
   });
 }
@@ -74,10 +76,11 @@ export async function POST(request: Request) {
         backgroundUrl: updated.backgroundUrl,
         deskColor: updated.deskColor,
         deskShape: updated.deskShape,
-        deskIcon: updated.deskIcon,
         labelPosition: updated.labelPosition,
         showName: updated.showName,
         showNumber: updated.showNumber,
+        deskTextSize: updated.deskTextSize,
+        deskVisibleWhenSearching: updated.deskVisibleWhenSearching,
         updatedAt: updated.updatedAt
       }
     });

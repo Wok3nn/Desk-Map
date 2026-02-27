@@ -19,6 +19,8 @@ model MapConfig {
   labelPosition String   @default("inside")
   showName      Boolean  @default(true)
   showNumber    Boolean  @default(true)
+  deskTextSize  Int      @default(14)
+  deskVisibleWhenSearching Boolean @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   desks         Desk[]

@@ -5,7 +5,7 @@ import { Stage, Layer, Rect, Text, Group, Transformer, Image as KonvaImage, Circ
 import { motion } from "framer-motion";
 import { Desk, MapConfig } from "@/lib/types";
 
-const MIN_SIZE = 6;
+const MIN_SIZE = 1;
 
 type DeskMapProps = {
   mode: "view" | "edit";
@@ -119,18 +119,16 @@ export function DeskMap({
     const newScale = direction > 0 ? oldScale / scaleBy : oldScale * scaleBy;
     stage.scale({ x: newScale, y: newScale });
     setScale(newScale);
-    const newPos = {
+    stage.position({
       x: pointer.x - mousePointTo.x * newScale,
       y: pointer.y - mousePointTo.y * newScale
-    };
-    stage.position(newPos);
+    });
     stage.batchDraw();
   };
 
   const updateDesk = (id: string, updates: Partial<Desk>) => {
     if (!onChange) return;
-    const next = desks.map((desk) => (desk.id === id ? { ...desk, ...updates } : desk));
-    onChange(next);
+    onChange(desks.map((desk) => (desk.id === id ? { ...desk, ...updates } : desk)));
   };
 
   const snap = (value: number) => {
@@ -142,22 +140,21 @@ export function DeskMap({
   const deskColor = map.deskColor || "#8764B8";
   const deskShape = map.deskShape || "rounded";
   const labelPosition = map.labelPosition || "inside";
-  const deskIcon = map.deskIcon || "none";
   const showName = map.showName ?? true;
   const showNumber = map.showNumber ?? true;
+  const baseTextSize = Math.max(8, Math.min(28, map.deskTextSize ?? 14));
+  const numberSize = Math.max(8, baseTextSize - 1);
+  const firstNameSize = Math.max(8, baseTextSize + 1);
+  const lastNameSize = Math.max(8, baseTextSize);
 
   const gridLines = useMemo(() => {
     const lines = [] as JSX.Element[];
     const spacing = Math.max(1, gridSize);
     for (let x = 0; x <= map.width; x += spacing) {
-      lines.push(
-        <Rect key={`grid-v-${x}`} x={x} y={0} width={1} height={map.height} fill="rgba(120,120,140,0.12)" listening={false} />
-      );
+      lines.push(<Rect key={`grid-v-${x}`} x={x} y={0} width={1} height={map.height} fill="rgba(120,120,140,0.12)" listening={false} />);
     }
     for (let y = 0; y <= map.height; y += spacing) {
-      lines.push(
-        <Rect key={`grid-h-${y}`} x={0} y={y} width={map.width} height={1} fill="rgba(120,120,140,0.12)" listening={false} />
-      );
+      lines.push(<Rect key={`grid-h-${y}`} x={0} y={y} width={map.width} height={1} fill="rgba(120,120,140,0.12)" listening={false} />);
     }
     return lines;
   }, [gridSize, map.height, map.width]);
@@ -192,16 +189,7 @@ export function DeskMap({
         style={{ background: "transparent" }}
       >
         <Layer>
-          {backgroundImage && (
-            <KonvaImage
-              image={backgroundImage}
-              x={0}
-              y={0}
-              width={map.width}
-              height={map.height}
-              listening={false}
-            />
-          )}
+          {backgroundImage && <KonvaImage image={backgroundImage} x={0} y={0} width={map.width} height={map.height} listening={false} />}
           {showGrid ? gridLines : null}
         </Layer>
         <Layer>
@@ -221,16 +209,7 @@ export function DeskMap({
               )}
               {deskShape === "diamond" && (
                 <Line
-                  points={[
-                    desk.x + desk.width / 2,
-                    desk.y,
-                    desk.x + desk.width,
-                    desk.y + desk.height / 2,
-                    desk.x + desk.width / 2,
-                    desk.y + desk.height,
-                    desk.x,
-                    desk.y + desk.height / 2
-                  ]}
+                  points={[desk.x + desk.width / 2, desk.y, desk.x + desk.width, desk.y + desk.height / 2, desk.x + desk.width / 2, desk.y + desk.height, desk.x, desk.y + desk.height / 2]}
                   closed
                   fill={desk.occupantFirstName ? deskColor : "#0F172A"}
                   opacity={mode === "edit" && selectedId === desk.id ? 0.95 : 0.9}
@@ -260,77 +239,44 @@ export function DeskMap({
                 draggable={mode === "edit" && !isPanning && !isRightMousePanning}
                 onClick={() => mode === "edit" && setSelectedId(desk.id)}
                 onTap={() => mode === "edit" && setSelectedId(desk.id)}
-                onDragEnd={(event) => {
-                  updateDesk(desk.id, {
-                    x: snap(event.target.x()),
-                    y: snap(event.target.y())
-                  });
-                }}
+                onDragEnd={(event) => updateDesk(desk.id, { x: snap(event.target.x()), y: snap(event.target.y()) })}
                 onTransformEnd={(event) => {
                   const node = event.target;
                   const scaleX = node.scaleX();
                   const scaleY = node.scaleY();
                   node.scaleX(1);
                   node.scaleY(1);
-                  const width = Math.max(MIN_SIZE, node.width() * scaleX);
-                  const height = Math.max(MIN_SIZE, node.height() * scaleY);
                   updateDesk(desk.id, {
                     x: snap(node.x()),
                     y: snap(node.y()),
-                    width: snap(width),
-                    height: snap(height)
+                    width: snap(Math.max(MIN_SIZE, node.width() * scaleX)),
+                    height: snap(Math.max(MIN_SIZE, node.height() * scaleY))
                   });
                 }}
               />
-              {deskIcon === "badge" && (
-                <Circle x={desk.x + desk.width - 12} y={desk.y + 12} radius={6} fill="#F8FAFC" opacity={0.9} listening={false} />
-              )}
-              {deskIcon === "pin" && (
-                <Circle x={desk.x + 12} y={desk.y + 12} radius={5} fill="#F8FAFC" opacity={0.9} listening={false} />
-              )}
               {(() => {
                 const effectivePosition = labelPosition === "inside" && (desk.width < 80 || desk.height < 52) ? "top" : labelPosition;
-                const baseX =
-                  effectivePosition === "left"
-                    ? desk.x - 120
-                    : effectivePosition === "right"
-                      ? desk.x + desk.width + 10
-                      : desk.x + 10;
-                const baseY =
-                  effectivePosition === "top"
-                    ? desk.y - 48
-                    : effectivePosition === "bottom"
-                      ? desk.y + desk.height + 8
-                      : desk.y + 10;
+                const baseX = effectivePosition === "left" ? desk.x - 120 : effectivePosition === "right" ? desk.x + desk.width + 10 : desk.x + 10;
+                const baseY = effectivePosition === "top" ? desk.y - 48 : effectivePosition === "bottom" ? desk.y + desk.height + 8 : desk.y + 10;
                 const textFill = effectivePosition === "inside" ? "#E2E8F0" : "#334155";
                 return (
                   <>
-                    {showNumber && (
-                      <Text
-                        x={baseX}
-                        y={baseY}
-                        text={`${desk.number}`}
-                        fontSize={14}
-                        fontStyle="bold"
-                        fill={textFill}
-                        listening={false}
-                      />
-                    )}
+                    {showNumber && <Text x={baseX} y={baseY} text={`${desk.number}`} fontSize={numberSize} fontStyle="bold" fill={textFill} listening={false} />}
                     {showName && (
                       <>
                         <Text
                           x={baseX}
-                          y={baseY + (showNumber ? 20 : 0)}
+                          y={baseY + (showNumber ? numberSize + 6 : 0)}
                           text={desk.occupantFirstName ?? "Available"}
-                          fontSize={16}
+                          fontSize={firstNameSize}
                           fill={effectivePosition === "inside" ? "#F8FAFC" : "#0F172A"}
                           listening={false}
                         />
                         <Text
                           x={baseX}
-                          y={baseY + (showNumber ? 40 : 20)}
+                          y={baseY + (showNumber ? numberSize + firstNameSize + 8 : firstNameSize + 4)}
                           text={desk.occupantLastName ?? ""}
-                          fontSize={14}
+                          fontSize={lastNameSize}
                           fill={textFill}
                           listening={false}
                         />
@@ -348,9 +294,7 @@ export function DeskMap({
               ref={trRef}
               rotateEnabled={false}
               boundBoxFunc={(oldBox, newBox) => {
-                if (newBox.width < MIN_SIZE || newBox.height < MIN_SIZE) {
-                  return oldBox;
-                }
+                if (newBox.width < MIN_SIZE || newBox.height < MIN_SIZE) return oldBox;
                 return newBox;
               }}
             />

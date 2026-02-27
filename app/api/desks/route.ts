@@ -37,7 +37,9 @@ async function ensureSeed() {
           deskIcon: "none",
           labelPosition: "inside",
           showName: true,
-          showNumber: true
+          showNumber: true,
+          deskTextSize: 14,
+          deskVisibleWhenSearching: false
         }
       });
     }
@@ -101,10 +103,14 @@ export async function PUT(request: Request) {
         data: {
           deskColor: typeof mapStyle.deskColor === "string" ? mapStyle.deskColor : undefined,
           deskShape: typeof mapStyle.deskShape === "string" ? mapStyle.deskShape : undefined,
-          deskIcon: typeof mapStyle.deskIcon === "string" ? mapStyle.deskIcon : undefined,
           labelPosition: typeof mapStyle.labelPosition === "string" ? mapStyle.labelPosition : undefined,
           showName: typeof mapStyle.showName === "boolean" ? mapStyle.showName : undefined,
           showNumber: typeof mapStyle.showNumber === "boolean" ? mapStyle.showNumber : undefined,
+          deskTextSize: typeof mapStyle.deskTextSize === "number" ? mapStyle.deskTextSize : undefined,
+          deskVisibleWhenSearching:
+            typeof mapStyle.deskVisibleWhenSearching === "boolean"
+              ? mapStyle.deskVisibleWhenSearching
+              : undefined,
           width: typeof mapStyle.width === "number" ? mapStyle.width : undefined,
           height: typeof mapStyle.height === "number" ? mapStyle.height : undefined
         }
