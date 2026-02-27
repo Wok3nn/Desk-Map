@@ -16,6 +16,9 @@ export type MapConfig = {
   width: number;
   height: number;
   backgroundUrl?: string | null;
+  brandLogoUrl?: string | null;
+  brandTitle?: string;
+  brandSubtitle?: string;
   deskColor?: string;
   deskTextColor?: string;
   deskShape?: "rectangle" | "rounded" | "capsule" | "circle" | "diamond";

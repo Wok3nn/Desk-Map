@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { LayoutGrid, Settings, Sparkles } from "lucide-react";
@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import type { MapConfig } from "@/lib/types";
 
 const navItems = [
   { href: "/viewer", label: "Viewer", icon: LayoutGrid },
@@ -18,20 +19,60 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [brand, setBrand] = useState<Pick<MapConfig, "brandLogoUrl" | "brandTitle" | "brandSubtitle">>({
+    brandLogoUrl: null,
+    brandTitle: "DeskMap",
+    brandSubtitle: "Premium seating intelligence"
+  });
   const viewerQuery = searchParams.get("q") ?? "";
   const isViewer = pathname?.startsWith("/viewer");
+
+  useEffect(() => {
+    const loadBranding = async () => {
+      try {
+        const res = await fetch("/api/desks", { cache: "no-store" });
+        if (!res.ok) return;
+        const payload = await res.json();
+        const map = payload.map as MapConfig | undefined;
+        if (!map) return;
+        setBrand({
+          brandLogoUrl: map.brandLogoUrl ?? null,
+          brandTitle: map.brandTitle ?? "DeskMap",
+          brandSubtitle: map.brandSubtitle ?? "Premium seating intelligence"
+        });
+      } catch {
+        // Keep defaults.
+      }
+    };
+
+    loadBranding();
+  }, []);
+
+  const navigateWithDirtyCheck = (href: string) => {
+    if (href === pathname) return;
+    const hasUnsavedChanges = typeof window !== "undefined" && window.localStorage.getItem("deskmap.unsavedChanges") === "1";
+    if (hasUnsavedChanges) {
+      const proceed = window.confirm("You have unsaved layout changes. Leave this page without saving?");
+      if (!proceed) return;
+    }
+    router.push(href);
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="flex w-full items-center justify-between px-4 py-4 md:px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-glow">
-              <Sparkles className="h-5 w-5" />
-            </div>
+            {brand.brandLogoUrl ? (
+              <img src={brand.brandLogoUrl} alt={brand.brandTitle ?? "DeskMap"} className="h-10 w-10 rounded-xl object-cover shadow-glow" />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-glow">
+                <Sparkles className="h-5 w-5" />
+              </div>
+            )}
             <div>
-              <p className="font-display text-lg font-semibold tracking-tight">DeskMap</p>
-              <p className="text-xs text-muted-foreground">Premium seating intelligence</p>
+              <p className="font-display text-lg font-semibold tracking-tight">{brand.brandTitle ?? "DeskMap"}</p>
+              <p className="text-xs text-muted-foreground">{brand.brandSubtitle ?? "Premium seating intelligence"}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -41,14 +82,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               return (
                 <Button
                   key={item.href}
-                  asChild
                   variant={isActive ? "default" : "ghost"}
                   className={cn("gap-2", !isActive && "text-muted-foreground")}
+                  onClick={() => navigateWithDirtyCheck(item.href)}
                 >
-                  <Link href={item.href}>
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
+                  <Icon className="h-4 w-4" />
+                  {item.label}
                 </Button>
               );
             })}

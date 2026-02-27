@@ -290,7 +290,7 @@ export function DeskMap({
                       : effectivePosition === "bottom-left" || effectivePosition === "bottom-center" || effectivePosition === "bottom-right"
                         ? bottomY
                         : insideY;
-                const textColor = map.deskTextColor || (effectivePosition === "inside" ? "#E2E8F0" : "#334155");
+                const textColor = map.deskTextColor || "#334155";
                 return (
                   <>
                     {showNumber && <Text x={baseX} y={baseY} width={labelWidth} align="center" text={`${desk.number}`} fontSize={numberSize} fontStyle="bold" fill={textColor} listening={false} />}

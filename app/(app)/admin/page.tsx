@@ -32,6 +32,9 @@ const DeskMap = dynamic(() => import("@/components/map/DeskMap").then((m) => m.D
 
 type MapStyle = Pick<
   MapConfig,
+  | "brandLogoUrl"
+  | "brandTitle"
+  | "brandSubtitle"
   | "deskColor"
   | "deskTextColor"
   | "deskShape"
@@ -44,6 +47,8 @@ type MapStyle = Pick<
   | "gridVisible"
 >;
 
+type SettingsTab = "desk" | "grid" | "searchbar" | "config";
+
 export default function AdminPage() {
   const { data, loading, error, saveDesks, setData } = useDeskData();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -51,12 +56,18 @@ export default function AdminPage() {
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [gridEnabled, setGridEnabled] = useState(true);
   const [gridSize, setGridSize] = useState(10);
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>("desk");
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [showMapImportInfo, setShowMapImportInfo] = useState(false);
   const [entraLoading, setEntraLoading] = useState(true);
+  const [isDirty, setIsDirty] = useState(false);
+  const savedSnapshotRef = useRef<string | null>(null);
   const [mapStyle, setMapStyle] = useState<MapStyle>({
+    brandLogoUrl: "",
+    brandTitle: "DeskMap",
+    brandSubtitle: "Premium seating intelligence",
     deskColor: "#8764B8",
-    deskTextColor: "#F8FAFC",
+    deskTextColor: "#334155",
     deskShape: "rounded",
     labelPosition: "top-center",
     showName: true,
@@ -121,8 +132,11 @@ export default function AdminPage() {
   useEffect(() => {
     if (!data?.map) return;
     setMapStyle({
+      brandLogoUrl: data.map.brandLogoUrl ?? "",
+      brandTitle: data.map.brandTitle ?? "DeskMap",
+      brandSubtitle: data.map.brandSubtitle ?? "Premium seating intelligence",
       deskColor: data.map.deskColor ?? "#8764B8",
-      deskTextColor: data.map.deskTextColor ?? "#F8FAFC",
+      deskTextColor: data.map.deskTextColor ?? "#334155",
       deskShape: data.map.deskShape ?? "rounded",
       labelPosition: data.map.labelPosition ?? "top-center",
       showName: data.map.showName ?? true,
@@ -138,7 +152,28 @@ export default function AdminPage() {
       width: data.map.width ?? 1200,
       height: data.map.height ?? 700
     });
-  }, [data?.map]);
+    savedSnapshotRef.current = JSON.stringify({
+      desks: data.desks,
+      mapStyle: {
+        brandLogoUrl: data.map.brandLogoUrl ?? "",
+        brandTitle: data.map.brandTitle ?? "DeskMap",
+        brandSubtitle: data.map.brandSubtitle ?? "Premium seating intelligence",
+        deskColor: data.map.deskColor ?? "#8764B8",
+        deskTextColor: data.map.deskTextColor ?? "#334155",
+        deskShape: data.map.deskShape ?? "rounded",
+        labelPosition: data.map.labelPosition ?? "top-center",
+        showName: data.map.showName ?? true,
+        showNumber: data.map.showNumber ?? true,
+        deskTextSize: data.map.deskTextSize ?? 14,
+        deskVisibleWhenSearching: data.map.deskVisibleWhenSearching ?? false,
+        gridSize: data.map.gridSize ?? 10,
+        gridVisible: data.map.gridVisible ?? true,
+        width: data.map.width ?? 1200,
+        height: data.map.height ?? 700
+      }
+    });
+    setIsDirty(false);
+  }, [data?.map?.id, data?.map?.updatedAt]);
 
   const nextDeskNumber = useMemo(() => {
     const numbers = new Set(desks.map((desk) => desk.number));
@@ -146,6 +181,36 @@ export default function AdminPage() {
     while (numbers.has(candidate)) candidate += 1;
     return candidate;
   }, [desks]);
+
+  useEffect(() => {
+    const currentSnapshot = JSON.stringify({
+      desks,
+      mapStyle: {
+        ...mapStyle,
+        gridSize,
+        gridVisible: gridEnabled,
+        width: mapSize.width,
+        height: mapSize.height
+      }
+    });
+    const dirty = savedSnapshotRef.current !== null && currentSnapshot !== savedSnapshotRef.current;
+    setIsDirty(dirty);
+  }, [desks, mapStyle, gridSize, gridEnabled, mapSize.width, mapSize.height]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("deskmap.unsavedChanges", isDirty ? "1" : "0");
+  }, [isDirty]);
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isDirty]);
 
   const handleAddDesk = () => {
     if (!data) return;
@@ -158,7 +223,7 @@ export default function AdminPage() {
   const handleSave = async () => {
     if (!saveDesks) return;
     try {
-      await saveDesks(
+      const payload = await saveDesks(
         desks,
         data
           ? {
@@ -171,6 +236,29 @@ export default function AdminPage() {
             }
           : undefined
       );
+      if (payload) {
+        savedSnapshotRef.current = JSON.stringify({
+          desks: payload.desks,
+          mapStyle: {
+            brandLogoUrl: payload.map.brandLogoUrl ?? "",
+            brandTitle: payload.map.brandTitle ?? "DeskMap",
+            brandSubtitle: payload.map.brandSubtitle ?? "Premium seating intelligence",
+            deskColor: payload.map.deskColor ?? "#8764B8",
+            deskTextColor: payload.map.deskTextColor ?? "#334155",
+            deskShape: payload.map.deskShape ?? "rounded",
+            labelPosition: payload.map.labelPosition ?? "top-center",
+            showName: payload.map.showName ?? true,
+            showNumber: payload.map.showNumber ?? true,
+            deskTextSize: payload.map.deskTextSize ?? 14,
+            deskVisibleWhenSearching: payload.map.deskVisibleWhenSearching ?? false,
+            gridSize: payload.map.gridSize ?? 10,
+            gridVisible: payload.map.gridVisible ?? true,
+            width: payload.map.width ?? 1200,
+            height: payload.map.height ?? 700
+          }
+        });
+      }
+      setIsDirty(false);
       toast.success("Layout saved and synced");
     } catch {
       toast.error("Failed to save layout");
@@ -326,26 +414,162 @@ export default function AdminPage() {
             <div>
               <CardTitle>Admin Studio</CardTitle>
               <p className="text-sm text-muted-foreground">Drag to move, use handles to resize, hold Ctrl or right-drag to pan.</p>
+              {isDirty && <p className="mt-1 text-xs font-medium text-amber-600">Unsaved changes</p>}
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-2 text-xs text-muted-foreground">
-                <span>Snap to grid</span>
-                <Switch checked={snapEnabled} onCheckedChange={setSnapEnabled} />
-              </div>
-              <div className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-2 text-xs text-muted-foreground">
-                <span>Grid</span>
-                <Switch checked={gridEnabled} onCheckedChange={setGridEnabled} />
-              </div>
               <Button variant="secondary" onClick={handleAddDesk}>Add Desk {nextDeskNumber}</Button>
-              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>Import Building Map</Button>
-              <Button variant="ghost" size="icon" onClick={() => setShowMapImportInfo((prev) => !prev)} aria-label="Map import information">
-                <Info className="h-4 w-4" />
-              </Button>
               <Button variant="outline" onClick={handleRemoveLast}>Remove Last</Button>
-              <Button variant="outline" onClick={handleNormalizeToGrid}>Normalize to Grid Unit</Button>
               <Button onClick={handleSave}>Save Layout</Button>
-              <Button variant="outline" onClick={handleExportConfig}>Export Config</Button>
-              <Button variant="outline" onClick={() => configFileInputRef.current?.click()}>Import Config</Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-muted/20 p-2">
+              <Button variant={settingsTab === "desk" ? "default" : "ghost"} size="sm" onClick={() => setSettingsTab("desk")}>Desk</Button>
+              <Button variant={settingsTab === "grid" ? "default" : "ghost"} size="sm" onClick={() => setSettingsTab("grid")}>Grid</Button>
+              <Button variant={settingsTab === "searchbar" ? "default" : "ghost"} size="sm" onClick={() => setSettingsTab("searchbar")}>Searchbar</Button>
+              <Button variant={settingsTab === "config" ? "default" : "ghost"} size="sm" onClick={() => setSettingsTab("config")}>Config</Button>
+            </div>
+            {settingsTab === "desk" && (
+              <Card className="mb-4 border border-border/60 bg-muted/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Desk Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-3 md:grid-cols-5">
+                  <div className="grid gap-1">
+                    <Label htmlFor="deskColor">Desk Color</Label>
+                    <Input id="deskColor" type="color" value={mapStyle.deskColor} onChange={(event) => setMapStyle({ ...mapStyle, deskColor: event.target.value })} />
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="deskTextColor">Text Color</Label>
+                    <Input id="deskTextColor" type="color" value={mapStyle.deskTextColor} onChange={(event) => setMapStyle({ ...mapStyle, deskTextColor: event.target.value })} />
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="deskShape">Desk Shape</Label>
+                    <Select id="deskShape" value={mapStyle.deskShape} onChange={(event) => setMapStyle({ ...mapStyle, deskShape: event.target.value as MapStyle["deskShape"] })}>
+                      <option value="rectangle">Rectangle</option>
+                      <option value="rounded">Rounded</option>
+                      <option value="capsule">Capsule</option>
+                      <option value="circle">Circle</option>
+                      <option value="diamond">Diamond</option>
+                    </Select>
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="labelPosition">Label Position</Label>
+                    <Select id="labelPosition" value={mapStyle.labelPosition} onChange={(event) => setMapStyle({ ...mapStyle, labelPosition: event.target.value as MapStyle["labelPosition"] })}>
+                      <option value="inside">Inside</option>
+                      <option value="center">Center</option>
+                      <option value="middle">Middle</option>
+                      <option value="top-left">Top Left</option>
+                      <option value="top-center">Top Center</option>
+                      <option value="top-right">Top Right</option>
+                      <option value="middle-left">Middle Left</option>
+                      <option value="middle-right">Middle Right</option>
+                      <option value="bottom-left">Bottom Left</option>
+                      <option value="bottom-center">Bottom Center</option>
+                      <option value="bottom-right">Bottom Right</option>
+                    </Select>
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="deskTextSize">Desk Text Size</Label>
+                    <Input
+                      id="deskTextSize"
+                      type="number"
+                      min={1}
+                      max={72}
+                      value={mapStyle.deskTextSize}
+                      onChange={(event) => setMapStyle({ ...mapStyle, deskTextSize: Math.max(1, Math.min(72, Number(event.target.value) || 14)) })}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={mapStyle.showName} onCheckedChange={(checked) => setMapStyle({ ...mapStyle, showName: checked })} />
+                    <Label>Show Name</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={mapStyle.showNumber} onCheckedChange={(checked) => setMapStyle({ ...mapStyle, showNumber: checked })} />
+                    <Label>Show Number</Label>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {settingsTab === "grid" && (
+              <Card className="mb-4 border border-border/60 bg-muted/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Grid Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-3 md:grid-cols-4">
+                  <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background px-3 py-2">
+                    <Switch checked={snapEnabled} onCheckedChange={setSnapEnabled} />
+                    <Label>Snap to Grid</Label>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background px-3 py-2">
+                    <Switch checked={gridEnabled} onCheckedChange={setGridEnabled} />
+                    <Label>Show Grid</Label>
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="gridSize">Grid Size</Label>
+                    <Input id="gridSize" type="number" min={1} value={gridSize} onChange={(event) => setGridSize(Math.max(1, Number(event.target.value) || 1))} />
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="mapWidth">Map Width</Label>
+                    <Input id="mapWidth" type="number" min={200} value={mapSize.width} onChange={(event) => setMapSize({ ...mapSize, width: Math.max(200, Number(event.target.value) || 200) })} />
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="mapHeight">Map Height</Label>
+                    <Input id="mapHeight" type="number" min={200} value={mapSize.height} onChange={(event) => setMapSize({ ...mapSize, height: Math.max(200, Number(event.target.value) || 200) })} />
+                  </div>
+                  <div className="flex items-end">
+                    <Button variant="outline" onClick={handleNormalizeToGrid}>Normalize to Grid Unit</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {settingsTab === "searchbar" && (
+              <Card className="mb-4 border border-border/60 bg-muted/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Searchbar Settings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={mapStyle.deskVisibleWhenSearching} onCheckedChange={(checked) => setMapStyle({ ...mapStyle, deskVisibleWhenSearching: checked })} />
+                    <Label>Desk Visible When Searching</Label>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {settingsTab === "config" && (
+              <Card className="mb-4 border border-border/60 bg-muted/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Config Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-3 md:grid-cols-2">
+                  <div className="grid gap-1 md:col-span-2">
+                    <Label htmlFor="brandLogoUrl">Logo URL (optional)</Label>
+                    <Input id="brandLogoUrl" value={mapStyle.brandLogoUrl ?? ""} onChange={(event) => setMapStyle({ ...mapStyle, brandLogoUrl: event.target.value })} placeholder="https://..." />
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="brandTitle">Header Title</Label>
+                    <Input id="brandTitle" value={mapStyle.brandTitle ?? ""} onChange={(event) => setMapStyle({ ...mapStyle, brandTitle: event.target.value })} />
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="brandSubtitle">Header Subtitle</Label>
+                    <Input id="brandSubtitle" value={mapStyle.brandSubtitle ?? ""} onChange={(event) => setMapStyle({ ...mapStyle, brandSubtitle: event.target.value })} />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 md:col-span-2">
+                    <Button variant="outline" onClick={() => fileInputRef.current?.click()}>Import Building Map</Button>
+                    <Button variant="ghost" size="icon" onClick={() => setShowMapImportInfo((prev) => !prev)} aria-label="Map import information">
+                      <Info className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" onClick={handleExportConfig}>Export Config</Button>
+                    <Button variant="outline" onClick={() => configFileInputRef.current?.click()}>Import Config</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {showMapImportInfo && (
+              <div className="mb-4 rounded-lg border border-border/60 bg-muted/40 p-3 text-sm text-muted-foreground">
+                Best: SVG (sharp at any zoom, smallest size for floor plans, ideal for pan/zoom). Good fallback: PNG (use high resolution, e.g. 3000px+ wide). Use JPG only for photo-like maps (lossy text/lines).
+              </div>
+            )}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -362,87 +586,6 @@ export default function AdminPage() {
                 onChange={handleImportConfig}
                 aria-label="Import deskmap configuration"
               />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {showMapImportInfo && (
-              <div className="mb-4 rounded-lg border border-border/60 bg-muted/40 p-3 text-sm text-muted-foreground">
-                Best: SVG (sharp at any zoom, smallest size for floor plans, ideal for pan/zoom). Good fallback: PNG (use high resolution, e.g. 3000px+ wide). Use JPG only for photo-like maps (lossy text/lines).
-              </div>
-            )}
-            <div className="mb-4 grid gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 md:grid-cols-5">
-              <div className="grid gap-1">
-                <Label htmlFor="deskColor">Desk Color</Label>
-                <Input id="deskColor" type="color" value={mapStyle.deskColor} onChange={(event) => setMapStyle({ ...mapStyle, deskColor: event.target.value })} />
-              </div>
-              <div className="grid gap-1">
-                <Label htmlFor="deskTextColor">Text Color</Label>
-                <Input id="deskTextColor" type="color" value={mapStyle.deskTextColor} onChange={(event) => setMapStyle({ ...mapStyle, deskTextColor: event.target.value })} />
-              </div>
-              <div className="grid gap-1">
-                <Label htmlFor="deskShape">Desk Shape</Label>
-                <Select id="deskShape" value={mapStyle.deskShape} onChange={(event) => setMapStyle({ ...mapStyle, deskShape: event.target.value as MapStyle["deskShape"] })}>
-                  <option value="rectangle">Rectangle</option>
-                  <option value="rounded">Rounded</option>
-                  <option value="capsule">Capsule</option>
-                  <option value="circle">Circle</option>
-                  <option value="diamond">Diamond</option>
-                </Select>
-              </div>
-              <div className="grid gap-1">
-                <Label htmlFor="labelPosition">Label Position</Label>
-                <Select id="labelPosition" value={mapStyle.labelPosition} onChange={(event) => setMapStyle({ ...mapStyle, labelPosition: event.target.value as MapStyle["labelPosition"] })}>
-                  <option value="inside">Inside</option>
-                  <option value="center">Center</option>
-                  <option value="middle">Middle</option>
-                  <option value="top-left">Top Left</option>
-                  <option value="top-center">Top Center</option>
-                  <option value="top-right">Top Right</option>
-                  <option value="middle-left">Middle Left</option>
-                  <option value="middle-right">Middle Right</option>
-                  <option value="bottom-left">Bottom Left</option>
-                  <option value="bottom-center">Bottom Center</option>
-                  <option value="bottom-right">Bottom Right</option>
-                </Select>
-              </div>
-              <div className="grid gap-1">
-                <Label htmlFor="deskTextSize">Desk Text Size</Label>
-                <Input
-                  id="deskTextSize"
-                  type="number"
-                  min={1}
-                  max={72}
-                  value={mapStyle.deskTextSize}
-                  onChange={(event) => setMapStyle({ ...mapStyle, deskTextSize: Math.max(1, Math.min(72, Number(event.target.value) || 14)) })}
-                />
-              </div>
-              <div className="flex items-end gap-2">
-                <Switch checked={mapStyle.showName} onCheckedChange={(checked) => setMapStyle({ ...mapStyle, showName: checked })} />
-                <Label>Show Name</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={mapStyle.showNumber} onCheckedChange={(checked) => setMapStyle({ ...mapStyle, showNumber: checked })} />
-                <Label>Show Number</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={mapStyle.deskVisibleWhenSearching} onCheckedChange={(checked) => setMapStyle({ ...mapStyle, deskVisibleWhenSearching: checked })} />
-                <Label>Desk Visible When Searching</Label>
-              </div>
-            </div>
-            <div className="mb-4 grid gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 md:grid-cols-4">
-              <div className="grid gap-1">
-                <Label htmlFor="gridSize">Grid Size</Label>
-                <Input id="gridSize" type="number" min={1} value={gridSize} onChange={(event) => setGridSize(Math.max(1, Number(event.target.value) || 1))} />
-              </div>
-              <div className="grid gap-1">
-                <Label htmlFor="mapWidth">Map Width</Label>
-                <Input id="mapWidth" type="number" min={200} value={mapSize.width} onChange={(event) => setMapSize({ ...mapSize, width: Math.max(200, Number(event.target.value) || 200) })} />
-              </div>
-              <div className="grid gap-1">
-                <Label htmlFor="mapHeight">Map Height</Label>
-                <Input id="mapHeight" type="number" min={200} value={mapSize.height} onChange={(event) => setMapSize({ ...mapSize, height: Math.max(200, Number(event.target.value) || 200) })} />
-              </div>
-            </div>
             {error ? (
               <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-6 text-sm text-destructive">{error}</div>
             ) : (

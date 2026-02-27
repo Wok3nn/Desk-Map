@@ -13,8 +13,11 @@ model MapConfig {
   width         Int
   height        Int
   backgroundUrl String?
+  brandLogoUrl  String?
+  brandTitle    String   @default("DeskMap")
+  brandSubtitle String   @default("Premium seating intelligence")
   deskColor     String   @default("#8764B8")
-  deskTextColor String   @default("#F8FAFC")
+  deskTextColor String   @default("#334155")
   deskShape     String   @default("rounded")
   labelPosition String   @default("inside")
   showName      Boolean  @default(true)

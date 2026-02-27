@@ -50,6 +50,9 @@ export function useDeskData() {
           ? {
               deskColor: mapStyle.deskColor,
               deskTextColor: mapStyle.deskTextColor,
+              brandLogoUrl: mapStyle.brandLogoUrl,
+              brandTitle: mapStyle.brandTitle,
+              brandSubtitle: mapStyle.brandSubtitle,
               deskShape: mapStyle.deskShape,
               labelPosition: mapStyle.labelPosition,
               showName: mapStyle.showName,
