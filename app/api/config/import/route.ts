@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { mkdir, writeFile } from "fs/promises";
+import path from "path";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -7,12 +9,28 @@ export async function POST(request: Request) {
   try {
     const payload = await request.json();
     const map = payload.map;
+    const backgroundFile = payload.backgroundFile ?? null;
     const desks = Array.isArray(payload.desks) ? payload.desks : [];
     const entraConfig = payload.entraConfig ?? null;
     const users = Array.isArray(payload.users) ? payload.users : [];
 
     if (!map) {
       return NextResponse.json({ error: "Invalid config: missing map" }, { status: 400 });
+    }
+
+    let importedBackgroundUrl = map.backgroundUrl ?? null;
+    if (
+      backgroundFile &&
+      typeof backgroundFile.filename === "string" &&
+      typeof backgroundFile.dataBase64 === "string" &&
+      backgroundFile.filename.trim().length > 0
+    ) {
+      const basename = path.basename(backgroundFile.filename);
+      const filename = `${Date.now()}-${basename}`;
+      const uploadDir = path.join(process.cwd(), "data", "uploads");
+      await mkdir(uploadDir, { recursive: true });
+      await writeFile(path.join(uploadDir, filename), Buffer.from(backgroundFile.dataBase64, "base64"));
+      importedBackgroundUrl = `/api/map/file/${encodeURIComponent(filename)}`;
     }
 
     await prisma.$transaction(async (tx) => {
@@ -27,7 +45,7 @@ export async function POST(request: Request) {
           name: map.name,
           width: map.width,
           height: map.height,
-          backgroundUrl: map.backgroundUrl ?? null,
+          backgroundUrl: importedBackgroundUrl,
           brandLogoUrl: map.brandLogoUrl ?? null,
           brandTitle: map.brandTitle ?? "DeskMap",
           brandSubtitle: map.brandSubtitle ?? "Premium seating intelligence",
