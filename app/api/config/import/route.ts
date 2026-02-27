@@ -90,6 +90,7 @@ export async function POST(request: Request) {
             mappingPrefix: entraConfig.mappingPrefix ?? "Desk-",
             mappingRegex: entraConfig.mappingRegex ?? null,
             adminGroupId: entraConfig.adminGroupId ?? null,
+            viewerGroupId: entraConfig.viewerGroupId ?? null,
             authMode: entraConfig.authMode ?? "public",
             lastTestAt: entraConfig.lastTestAt ?? null,
             lastSyncAt: entraConfig.lastSyncAt ?? null,

@@ -91,6 +91,7 @@ export default function AdminPage() {
     mappingPrefix: "Desk-",
     mappingRegex: "",
     adminGroupId: "",
+    viewerGroupId: "",
     authMode: "public"
   });
   const [entraMeta, setEntraMeta] = useState<{ lastTestAt?: string; lastSyncAt?: string; lastSyncStatus?: string }>({});
@@ -115,6 +116,7 @@ export default function AdminPage() {
             mappingPrefix: payload.config.mappingPrefix ?? prev.mappingPrefix,
             mappingRegex: payload.config.mappingRegex ?? "",
             adminGroupId: payload.config.adminGroupId ?? "",
+            viewerGroupId: payload.config.viewerGroupId ?? "",
             authMode: payload.config.authMode ?? "public"
           }));
           setHasStoredClientSecret(Boolean(payload.config.hasClientSecret));
@@ -691,15 +693,21 @@ export default function AdminPage() {
                 <div className="grid gap-2">
                   <Label htmlFor="adminGroupId">Admin Group Object ID</Label>
                   <Input id="adminGroupId" value={entraConfig.adminGroupId} onChange={(event) => setEntraConfig({ ...entraConfig, adminGroupId: event.target.value })} />
-                  <p className="text-xs text-muted-foreground">Planned use: restrict Admin Studio access to members of this Entra group.</p>
+                  <p className="text-xs text-muted-foreground">Users in this group can access Admin Studio. Leave blank to disable admin group restriction.</p>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="viewerGroupId">Viewer Group Object ID</Label>
+                  <Input id="viewerGroupId" value={entraConfig.viewerGroupId} onChange={(event) => setEntraConfig({ ...entraConfig, viewerGroupId: event.target.value })} />
+                  <p className="text-xs text-muted-foreground">Used when App Access Mode is set to `Viewer group only`.</p>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="authMode">App Access Mode</Label>
                   <Select id="authMode" value={entraConfig.authMode} onChange={(event) => setEntraConfig({ ...entraConfig, authMode: event.target.value })}>
                     <option value="public">Public (no login)</option>
                     <option value="entra">Entra login required</option>
+                    <option value="viewer-group">Viewer group only</option>
                   </Select>
-                  <p className="text-xs text-muted-foreground">Note: Entra login enforcement/session behavior is not wired yet in this build.</p>
+                  <p className="text-xs text-muted-foreground">Sessions are kept for about 24 hours before sign-in is required again.</p>
                 </div>
               </div>
               <div className="mt-6 grid gap-2 text-xs text-muted-foreground">

@@ -16,6 +16,7 @@ export async function GET() {
           mappingPrefix: config.mappingPrefix,
           mappingRegex: config.mappingRegex,
           adminGroupId: config.adminGroupId,
+          viewerGroupId: config.viewerGroupId,
           authMode: config.authMode,
           hasClientSecret: Boolean(config.clientSecretEnc),
           lastTestAt: config.lastTestAt,
@@ -44,6 +45,7 @@ export async function PUT(request: Request) {
       mappingPrefix: body.mappingPrefix ?? null,
       mappingRegex: body.mappingRegex ?? null,
       adminGroupId: body.adminGroupId ?? null,
+      viewerGroupId: body.viewerGroupId ?? null,
       authMode: body.authMode ?? "public"
     };
 
@@ -64,6 +66,7 @@ export async function PUT(request: Request) {
         mappingPrefix: saved.mappingPrefix,
         mappingRegex: saved.mappingRegex,
         adminGroupId: saved.adminGroupId,
+        viewerGroupId: saved.viewerGroupId,
         authMode: saved.authMode,
         hasClientSecret: Boolean(saved.clientSecretEnc),
         lastTestAt: saved.lastTestAt,

@@ -56,7 +56,7 @@ export async function fetchGraphUsers(settings: EntraSettings, limit?: number) {
   return users;
 }
 
-async function getClientCredentialToken(settings: EntraSettings) {
+export async function getClientCredentialToken(settings: EntraSettings) {
   const params = new URLSearchParams();
   params.set("client_id", settings.clientId);
   params.set("scope", settings.scopes || "https://graph.microsoft.com/.default");
@@ -74,6 +74,19 @@ async function getClientCredentialToken(settings: EntraSettings) {
   }
   const payload = await res.json();
   return payload.access_token as string;
+}
+
+export async function isUserInGroup(userObjectId: string, groupId: string, settings: EntraSettings) {
+  if (!userObjectId || !groupId) return false;
+  const token = await getClientCredentialToken(settings);
+  const url = `https://graph.microsoft.com/v1.0/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(userObjectId)}/$ref`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (res.status === 204) return true;
+  if (res.status === 404) return false;
+  const text = await res.text();
+  throw new Error(`Group membership check failed: ${res.status} ${text}`);
 }
 
 export function mapOfficeLocationToDesk(officeLocation: string | null | undefined, settings: EntraSettings) {
