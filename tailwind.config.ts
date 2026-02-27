@@ -33,7 +33,7 @@ const config: Config = {
       },
       boxShadow: {
         soft: "0 10px 30px -12px rgba(15, 23, 42, 0.35)",
-        glow: "0 0 0 1px rgba(64, 168, 255, 0.2), 0 10px 30px -12px rgba(64, 168, 255, 0.55)"
+        glow: "0 0 0 1px rgba(64, 78, 97, 0.22), 0 10px 30px -12px rgba(64, 78, 97, 0.55)"
       },
       borderRadius: {
         xl: "1rem",
