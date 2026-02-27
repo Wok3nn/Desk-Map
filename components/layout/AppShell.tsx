@@ -64,9 +64,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex w-full items-center justify-between px-4 py-4 md:px-6">
           <div className="flex items-center gap-3">
             {brand.brandLogoUrl ? (
-              <img src={brand.brandLogoUrl} alt={brand.brandTitle ?? "DeskMap"} className="h-10 w-10 rounded-xl object-cover shadow-glow" />
+              <img src={brand.brandLogoUrl} alt={brand.brandTitle ?? "DeskMap"} className="h-12 w-12 rounded-lg object-contain bg-white p-1 shadow-glow" />
             ) : (
-              <img src="/brand-logo.png" alt={brand.brandTitle ?? "DeskMap"} className="h-10 w-10 rounded-xl object-cover shadow-glow" />
+              <img src="/brand-logo.png" alt={brand.brandTitle ?? "DeskMap"} className="h-12 w-12 rounded-lg object-contain bg-white p-1 shadow-glow" />
             )}
             <div>
               <p className="font-display text-lg font-semibold tracking-tight">{brand.brandTitle ?? "DeskMap"}</p>
