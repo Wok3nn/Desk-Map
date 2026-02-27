@@ -30,22 +30,26 @@ const createDesk = (number: number): Desk => ({
 
 const DeskMap = dynamic(() => import("@/components/map/DeskMap").then((m) => m.DeskMap), { ssr: false });
 
-type MapStyle = Pick<MapConfig, "deskColor" | "deskIcon" | "labelPosition" | "showName" | "showNumber">;
+type MapStyle = Pick<MapConfig, "deskColor" | "deskShape" | "deskIcon" | "labelPosition" | "showName" | "showNumber">;
 
 export default function AdminPage() {
   const { data, loading, error, saveDesks, setData } = useDeskData();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [snapEnabled, setSnapEnabled] = useState(true);
+  const [gridEnabled, setGridEnabled] = useState(true);
+  const [gridSize, setGridSize] = useState(10);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [showMapImportInfo, setShowMapImportInfo] = useState(false);
   const [entraLoading, setEntraLoading] = useState(true);
   const [mapStyle, setMapStyle] = useState<MapStyle>({
     deskColor: "#8764B8",
+    deskShape: "rounded",
     deskIcon: "none",
     labelPosition: "inside",
     showName: true,
     showNumber: true
   });
+  const [mapSize, setMapSize] = useState({ width: 1200, height: 700 });
   const [entraConfig, setEntraConfig] = useState({
     tenantId: "",
     clientId: "",
@@ -101,10 +105,15 @@ export default function AdminPage() {
     if (!data?.map) return;
     setMapStyle({
       deskColor: data.map.deskColor ?? "#8764B8",
+      deskShape: data.map.deskShape ?? "rounded",
       deskIcon: data.map.deskIcon ?? "none",
       labelPosition: data.map.labelPosition ?? "inside",
       showName: data.map.showName ?? true,
       showNumber: data.map.showNumber ?? true
+    });
+    setMapSize({
+      width: data.map.width ?? 1200,
+      height: data.map.height ?? 700
     });
   }, [data?.map]);
 
@@ -125,7 +134,17 @@ export default function AdminPage() {
   const handleSave = async () => {
     if (!saveDesks) return;
     try {
-      await saveDesks(desks, data ? { ...data.map, ...mapStyle } : undefined);
+      await saveDesks(
+        desks,
+        data
+          ? {
+              ...data.map,
+              ...mapStyle,
+              width: mapSize.width,
+              height: mapSize.height
+            }
+          : undefined
+      );
       toast.success("Layout saved and synced");
     } catch {
       toast.error("Failed to save layout");
@@ -233,6 +252,10 @@ export default function AdminPage() {
                 <span>Snap to grid</span>
                 <Switch checked={snapEnabled} onCheckedChange={setSnapEnabled} />
               </div>
+              <div className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-2 text-xs text-muted-foreground">
+                <span>Grid</span>
+                <Switch checked={gridEnabled} onCheckedChange={setGridEnabled} />
+              </div>
               <Button variant="secondary" onClick={handleAddDesk}>Add Desk {nextDeskNumber}</Button>
               <Button variant="outline" onClick={() => fileInputRef.current?.click()}>Import Building Map</Button>
               <Button
@@ -272,6 +295,25 @@ export default function AdminPage() {
                 />
               </div>
               <div className="grid gap-1">
+                <Label htmlFor="deskShape">Desk Shape</Label>
+                <Select
+                  id="deskShape"
+                  value={mapStyle.deskShape}
+                  onChange={(event) =>
+                    setMapStyle({
+                      ...mapStyle,
+                      deskShape: event.target.value as MapStyle["deskShape"]
+                    })
+                  }
+                >
+                  <option value="rectangle">Rectangle</option>
+                  <option value="rounded">Rounded</option>
+                  <option value="capsule">Capsule</option>
+                  <option value="circle">Circle</option>
+                  <option value="diamond">Diamond</option>
+                </Select>
+              </div>
+              <div className="grid gap-1">
                 <Label htmlFor="deskIcon">Desk Icon</Label>
                 <Select
                   id="deskIcon"
@@ -303,9 +345,41 @@ export default function AdminPage() {
                 <Switch checked={mapStyle.showName} onCheckedChange={(checked) => setMapStyle({ ...mapStyle, showName: checked })} />
                 <Label>Show Name</Label>
               </div>
-              <div className="flex items-end gap-2">
+              <div className="flex items-center gap-2">
                 <Switch checked={mapStyle.showNumber} onCheckedChange={(checked) => setMapStyle({ ...mapStyle, showNumber: checked })} />
                 <Label>Show Number</Label>
+              </div>
+            </div>
+            <div className="mb-4 grid gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 md:grid-cols-4">
+              <div className="grid gap-1">
+                <Label htmlFor="gridSize">Grid Size</Label>
+                <Input
+                  id="gridSize"
+                  type="number"
+                  min={1}
+                  value={gridSize}
+                  onChange={(event) => setGridSize(Math.max(1, Number(event.target.value) || 1))}
+                />
+              </div>
+              <div className="grid gap-1">
+                <Label htmlFor="mapWidth">Map Width</Label>
+                <Input
+                  id="mapWidth"
+                  type="number"
+                  min={200}
+                  value={mapSize.width}
+                  onChange={(event) => setMapSize({ ...mapSize, width: Math.max(200, Number(event.target.value) || 200) })}
+                />
+              </div>
+              <div className="grid gap-1">
+                <Label htmlFor="mapHeight">Map Height</Label>
+                <Input
+                  id="mapHeight"
+                  type="number"
+                  min={200}
+                  value={mapSize.height}
+                  onChange={(event) => setMapSize({ ...mapSize, height: Math.max(200, Number(event.target.value) || 200) })}
+                />
               </div>
             </div>
             {error ? (
@@ -313,10 +387,12 @@ export default function AdminPage() {
             ) : (
               <DeskMap
                 mode="edit"
-                map={{ ...data.map, ...mapStyle }}
+                map={{ ...data.map, ...mapStyle, width: mapSize.width, height: mapSize.height }}
                 desks={desks}
                 onChange={(next) => setData({ ...data, desks: next })}
                 snapEnabled={snapEnabled}
+                gridSize={gridSize}
+                showGrid={gridEnabled}
               />
             )}
           </CardContent>

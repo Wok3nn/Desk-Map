@@ -14,6 +14,7 @@ model MapConfig {
   height        Int
   backgroundUrl String?
   deskColor     String   @default("#8764B8")
+  deskShape     String   @default("rounded")
   deskIcon      String   @default("none")
   labelPosition String   @default("inside")
   showName      Boolean  @default(true)

@@ -17,6 +17,7 @@ export type MapConfig = {
   height: number;
   backgroundUrl?: string | null;
   deskColor?: string;
+  deskShape?: "rectangle" | "rounded" | "capsule" | "circle" | "diamond";
   deskIcon?: "none" | "badge" | "pin";
   labelPosition?: "inside" | "top" | "bottom" | "left" | "right";
   showName?: boolean;

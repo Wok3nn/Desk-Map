@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Stage, Layer, Rect, Text, Group, Transformer, Image as KonvaImage, Circle } from "react-konva";
+import { Stage, Layer, Rect, Text, Group, Transformer, Image as KonvaImage, Circle, Line } from "react-konva";
 import { motion } from "framer-motion";
 import { Desk, MapConfig } from "@/lib/types";
 
-const MIN_SIZE = 40;
+const MIN_SIZE = 6;
 
 type DeskMapProps = {
   mode: "view" | "edit";
@@ -14,9 +14,18 @@ type DeskMapProps = {
   onChange?: (desks: Desk[]) => void;
   snapEnabled?: boolean;
   gridSize?: number;
+  showGrid?: boolean;
 };
 
-export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridSize = 20 }: DeskMapProps) {
+export function DeskMap({
+  mode,
+  map,
+  desks,
+  onChange,
+  snapEnabled = false,
+  gridSize = 10,
+  showGrid = mode === "edit"
+}: DeskMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const stageRef = useRef<any>(null);
   const trRef = useRef<any>(null);
@@ -131,6 +140,7 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
 
   const stageDraggable = mode === "view" || isPanning || isRightMousePanning;
   const deskColor = map.deskColor || "#8764B8";
+  const deskShape = map.deskShape || "rounded";
   const labelPosition = map.labelPosition || "inside";
   const deskIcon = map.deskIcon || "none";
   const showName = map.showName ?? true;
@@ -138,15 +148,15 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
 
   const gridLines = useMemo(() => {
     const lines = [] as JSX.Element[];
-    const spacing = gridSize;
+    const spacing = Math.max(1, gridSize);
     for (let x = 0; x <= map.width; x += spacing) {
       lines.push(
-        <Rect key={`grid-v-${x}`} x={x} y={0} width={1} height={map.height} fill="rgba(120,120,140,0.12)" />
+        <Rect key={`grid-v-${x}`} x={x} y={0} width={1} height={map.height} fill="rgba(120,120,140,0.12)" listening={false} />
       );
     }
     for (let y = 0; y <= map.height; y += spacing) {
       lines.push(
-        <Rect key={`grid-h-${y}`} x={0} y={y} width={map.width} height={1} fill="rgba(120,120,140,0.12)" />
+        <Rect key={`grid-h-${y}`} x={0} y={y} width={map.width} height={1} fill="rgba(120,120,140,0.12)" listening={false} />
       );
     }
     return lines;
@@ -172,8 +182,8 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
             return;
           }
           if (mode === "edit" && !isPanning) {
-            const clickedOnEmpty = event.target === event.target.getStage();
-            if (clickedOnEmpty) setSelectedId(null);
+            const clickedDesk = event.target?.hasName?.("desk-shape");
+            if (!clickedDesk) setSelectedId(null);
           }
         }}
         onMouseUp={() => setIsRightMousePanning(false)}
@@ -192,22 +202,61 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
               listening={false}
             />
           )}
-          {gridLines}
+          {showGrid ? gridLines : null}
         </Layer>
         <Layer>
           {desks.map((desk) => (
             <Group key={desk.id}>
+              {deskShape === "circle" && (
+                <Circle
+                  x={desk.x + desk.width / 2}
+                  y={desk.y + desk.height / 2}
+                  radius={Math.max(MIN_SIZE / 2, Math.min(desk.width, desk.height) / 2)}
+                  fill={desk.occupantFirstName ? deskColor : "#0F172A"}
+                  opacity={mode === "edit" && selectedId === desk.id ? 0.95 : 0.9}
+                  shadowBlur={20}
+                  shadowColor="rgba(0,0,0,0.2)"
+                  listening={false}
+                />
+              )}
+              {deskShape === "diamond" && (
+                <Line
+                  points={[
+                    desk.x + desk.width / 2,
+                    desk.y,
+                    desk.x + desk.width,
+                    desk.y + desk.height / 2,
+                    desk.x + desk.width / 2,
+                    desk.y + desk.height,
+                    desk.x,
+                    desk.y + desk.height / 2
+                  ]}
+                  closed
+                  fill={desk.occupantFirstName ? deskColor : "#0F172A"}
+                  opacity={mode === "edit" && selectedId === desk.id ? 0.95 : 0.9}
+                  shadowBlur={20}
+                  shadowColor="rgba(0,0,0,0.2)"
+                  listening={false}
+                />
+              )}
               <Rect
                 id={`desk-${desk.id}`}
+                name="desk-shape"
                 x={desk.x}
                 y={desk.y}
                 width={desk.width}
                 height={desk.height}
-                cornerRadius={8}
-                fill={desk.occupantFirstName ? deskColor : "#0F172A"}
-                opacity={mode === "edit" && selectedId === desk.id ? 0.95 : 0.9}
-                shadowBlur={20}
-                shadowColor="rgba(0,0,0,0.2)"
+                cornerRadius={deskShape === "rectangle" ? 0 : deskShape === "capsule" ? 999 : 8}
+                fill={
+                  deskShape === "rectangle" || deskShape === "rounded" || deskShape === "capsule"
+                    ? desk.occupantFirstName
+                      ? deskColor
+                      : "#0F172A"
+                    : "rgba(15,23,42,0.001)"
+                }
+                opacity={deskShape === "rectangle" || deskShape === "rounded" || deskShape === "capsule" ? (mode === "edit" && selectedId === desk.id ? 0.95 : 0.9) : 1}
+                shadowBlur={deskShape === "rectangle" || deskShape === "rounded" || deskShape === "capsule" ? 20 : 0}
+                shadowColor={deskShape === "rectangle" || deskShape === "rounded" || deskShape === "capsule" ? "rgba(0,0,0,0.2)" : "transparent"}
                 draggable={mode === "edit" && !isPanning && !isRightMousePanning}
                 onClick={() => mode === "edit" && setSelectedId(desk.id)}
                 onTap={() => mode === "edit" && setSelectedId(desk.id)}
@@ -240,9 +289,20 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
                 <Circle x={desk.x + 12} y={desk.y + 12} radius={5} fill="#F8FAFC" opacity={0.9} listening={false} />
               )}
               {(() => {
-                const baseX = labelPosition === "left" ? desk.x - 120 : labelPosition === "right" ? desk.x + desk.width + 10 : desk.x + 10;
-                const baseY = labelPosition === "top" ? desk.y - 48 : labelPosition === "bottom" ? desk.y + desk.height + 8 : desk.y + 10;
-                const textFill = labelPosition === "inside" ? "#E2E8F0" : "#334155";
+                const effectivePosition = labelPosition === "inside" && (desk.width < 80 || desk.height < 52) ? "top" : labelPosition;
+                const baseX =
+                  effectivePosition === "left"
+                    ? desk.x - 120
+                    : effectivePosition === "right"
+                      ? desk.x + desk.width + 10
+                      : desk.x + 10;
+                const baseY =
+                  effectivePosition === "top"
+                    ? desk.y - 48
+                    : effectivePosition === "bottom"
+                      ? desk.y + desk.height + 8
+                      : desk.y + 10;
+                const textFill = effectivePosition === "inside" ? "#E2E8F0" : "#334155";
                 return (
                   <>
                     {showNumber && (
@@ -263,7 +323,7 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
                           y={baseY + (showNumber ? 20 : 0)}
                           text={desk.occupantFirstName ?? "Available"}
                           fontSize={16}
-                          fill={labelPosition === "inside" ? "#F8FAFC" : "#0F172A"}
+                          fill={effectivePosition === "inside" ? "#F8FAFC" : "#0F172A"}
                           listening={false}
                         />
                         <Text
@@ -303,4 +363,3 @@ export function DeskMap({ mode, map, desks, onChange, snapEnabled = false, gridS
     </motion.div>
   );
 }
-

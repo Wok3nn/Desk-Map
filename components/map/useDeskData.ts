@@ -49,10 +49,13 @@ export function useDeskData() {
         mapStyle: mapStyle
           ? {
               deskColor: mapStyle.deskColor,
+              deskShape: mapStyle.deskShape,
               deskIcon: mapStyle.deskIcon,
               labelPosition: mapStyle.labelPosition,
               showName: mapStyle.showName,
-              showNumber: mapStyle.showNumber
+              showNumber: mapStyle.showNumber,
+              width: mapStyle.width,
+              height: mapStyle.height
             }
           : undefined
       })

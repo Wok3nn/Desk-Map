@@ -33,6 +33,7 @@ async function ensureSeed() {
           height: 700,
           backgroundUrl: null,
           deskColor: "#8764B8",
+          deskShape: "rounded",
           deskIcon: "none",
           labelPosition: "inside",
           showName: true,
@@ -99,10 +100,13 @@ export async function PUT(request: Request) {
         where: { id: map.id },
         data: {
           deskColor: typeof mapStyle.deskColor === "string" ? mapStyle.deskColor : undefined,
+          deskShape: typeof mapStyle.deskShape === "string" ? mapStyle.deskShape : undefined,
           deskIcon: typeof mapStyle.deskIcon === "string" ? mapStyle.deskIcon : undefined,
           labelPosition: typeof mapStyle.labelPosition === "string" ? mapStyle.labelPosition : undefined,
           showName: typeof mapStyle.showName === "boolean" ? mapStyle.showName : undefined,
-          showNumber: typeof mapStyle.showNumber === "boolean" ? mapStyle.showNumber : undefined
+          showNumber: typeof mapStyle.showNumber === "boolean" ? mapStyle.showNumber : undefined,
+          width: typeof mapStyle.width === "number" ? mapStyle.width : undefined,
+          height: typeof mapStyle.height === "number" ? mapStyle.height : undefined
         }
       });
     }

@@ -36,7 +36,7 @@ export default function ViewerPage() {
               {error}
             </div>
           ) : (
-            <DeskMap mode="view" map={data.map} desks={data.desks} />
+            <DeskMap mode="view" map={data.map} desks={data.desks} showGrid={false} />
           )}
         </CardContent>
       </Card>
