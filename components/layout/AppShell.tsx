@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { LayoutGrid, Settings, Sparkles } from "lucide-react";
+import { LayoutGrid, Settings } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,9 +66,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {brand.brandLogoUrl ? (
               <img src={brand.brandLogoUrl} alt={brand.brandTitle ?? "DeskMap"} className="h-10 w-10 rounded-xl object-cover shadow-glow" />
             ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-glow">
-                <Sparkles className="h-5 w-5" />
-              </div>
+              <img src="/brand-logo.png" alt={brand.brandTitle ?? "DeskMap"} className="h-10 w-10 rounded-xl object-cover shadow-glow" />
             )}
             <div>
               <p className="font-display text-lg font-semibold tracking-tight">{brand.brandTitle ?? "DeskMap"}</p>

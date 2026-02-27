@@ -18,7 +18,15 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: "DeskMap",
-  description: "Premium desk mapping and seating experience."
+  description: "Premium desk mapping and seating experience.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", type: "image/x-icon" },
+      { url: "/brand-logo.png", type: "image/png" }
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/brand-logo.png"
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
