@@ -60,6 +60,7 @@ export default function AdminPage() {
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [showMapImportInfo, setShowMapImportInfo] = useState(false);
   const [entraLoading, setEntraLoading] = useState(true);
+  const [appOrigin, setAppOrigin] = useState("");
   const [showTenantId, setShowTenantId] = useState(false);
   const [showClientId, setShowClientId] = useState(false);
   const [hasStoredClientSecret, setHasStoredClientSecret] = useState(false);
@@ -97,6 +98,12 @@ export default function AdminPage() {
   const [entraMeta, setEntraMeta] = useState<{ lastTestAt?: string; lastSyncAt?: string; lastSyncStatus?: string }>({});
 
   const desks = data?.desks ?? [];
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setAppOrigin(window.location.origin);
+    }
+  }, []);
 
   useEffect(() => {
     const loadConfig = async () => {
@@ -641,6 +648,12 @@ export default function AdminPage() {
             <CardHeader className="gap-3">
               <CardTitle>Microsoft Entra Sync</CardTitle>
               <p className="text-sm text-muted-foreground">Configure Graph access and seat mapping rules. Graph API must include `User.Read.All` (application permission) with admin consent. Secrets are encrypted at rest.</p>
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-xs">
+                <p className="font-medium">What Redirect URI Should You Use?</p>
+                <p className="mt-1 text-muted-foreground">Use this exact URI in Entra App Registration:</p>
+                <code className="mt-1 block rounded bg-background px-2 py-1">{appOrigin || "http://<server-ip>:<port>"}/api/auth/callback</code>
+                <p className="mt-2 text-muted-foreground">Only `/api/auth/callback` is valid for this DeskMap build.</p>
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" onClick={handleTestEntra} disabled={entraLoading}>Test Connection</Button>
                 <Button variant="secondary" onClick={handleSyncEntra} disabled={entraLoading}>Sync Now</Button>
