@@ -36,6 +36,23 @@ export function DeskMap({
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 });
   const [backgroundImage, setBackgroundImage] = useState<HTMLImageElement | null>(null);
 
+  const fitStageToContainer = () => {
+    const el = containerRef.current;
+    const stage = stageRef.current;
+    if (!el || !stage) return;
+    const width = el.clientWidth;
+    const height = el.clientHeight;
+    if (!width || !height) return;
+    setStageSize({ width, height });
+    const fitScale = Math.min(width / map.width, height / map.height);
+    stage.scale({ x: fitScale, y: fitScale });
+    setScale(fitScale);
+    const offsetX = (width - map.width * fitScale) / 2;
+    const offsetY = (height - map.height * fitScale) / 2;
+    stage.position({ x: offsetX, y: offsetY });
+    stage.batchDraw();
+  };
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.code === "ControlLeft" || event.code === "ControlRight") setIsPanning(true);
@@ -73,24 +90,17 @@ export function DeskMap({
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      const { width, height } = entry.contentRect;
-      setStageSize({ width, height });
-      const stage = stageRef.current;
-      if (stage) {
-        const fitScale = Math.min(width / map.width, height / map.height);
-        stage.scale({ x: fitScale, y: fitScale });
-        setScale(fitScale);
-        const offsetX = (width - map.width * fitScale) / 2;
-        const offsetY = (height - map.height * fitScale) / 2;
-        stage.position({ x: offsetX, y: offsetY });
-        stage.batchDraw();
-      }
+    const observer = new ResizeObserver((_entries) => {
+      fitStageToContainer();
     });
     observer.observe(containerRef.current);
-    return () => observer.disconnect();
+    const onWindowResize = () => fitStageToContainer();
+    window.addEventListener("resize", onWindowResize);
+    fitStageToContainer();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", onWindowResize);
+    };
   }, [map.height, map.width]);
 
   useEffect(() => {

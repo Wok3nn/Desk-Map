@@ -106,6 +106,14 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const runResize = () => window.dispatchEvent(new Event("resize"));
+    runResize();
+    const timer = window.setTimeout(runResize, 320);
+    return () => window.clearTimeout(timer);
+  }, [settingsOpen]);
+
+  useEffect(() => {
     const loadConfig = async () => {
       try {
         setEntraLoading(true);
@@ -429,7 +437,7 @@ export default function AdminPage() {
 
   return (
     <div className="relative">
-      <div className={cn("grid gap-6 transition-[padding] duration-300", settingsOpen && "xl:pr-[430px]")}>
+      <div className={cn("grid gap-6 transition-[padding] duration-300", settingsOpen && "lg:pr-[430px]")}>
         <Card>
           <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
@@ -644,7 +652,7 @@ export default function AdminPage() {
         )}
       >
         <div className="h-full overflow-y-auto p-4">
-          <Card className="h-full">
+          <Card>
             <CardHeader className="gap-3">
               <CardTitle>Microsoft Entra Sync</CardTitle>
               <p className="text-sm text-muted-foreground">Configure Graph access and seat mapping rules. Graph API must include `User.Read.All` (application permission) with admin consent. Secrets are encrypted at rest.</p>
